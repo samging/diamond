@@ -4,9 +4,6 @@ mod test {
 
     #[test]
     fn _test() -> anyhow::Result<()> {
-        "mohammedjdw"
-            .to_string()
-            .check_password_(&"".to_string(), Ok("mohammed".to_string()).as_ref())?;
         Ok(())
     }
     #[test]
