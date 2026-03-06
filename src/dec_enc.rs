@@ -22,7 +22,7 @@ use crate::backend::safe::AnyHowErrHelper;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Felids {
-    pub url_app: String,
+    pub id: String,
     pub data: String,
 }
 
@@ -44,7 +44,7 @@ pub fn _pre_() -> anyhow::Result<()> {
 
 pub fn pre_add(
     username_email: &str,
-    url_app: &str,
+    id: &str,
     password: &str,
     master_key: &str,
     ef: Option<&String>,
@@ -57,7 +57,7 @@ pub fn pre_add(
     let data = BASE64_STANDARD.encode(data);
 
     let cont = Felids {
-        url_app: url_app.to_string(),
+        id: id.to_string(),
         data: data,
     };
 
@@ -80,14 +80,14 @@ pub fn pre_add(
         ">>{}: added [{}] [{}]",
         "obsidian".bright_cyan().bold(),
         username_email.to_string().white().bold(),
-        url_app.bright_white().bold()
+        id.bright_white().bold()
     );
     Ok(())
 }
 
 pub fn add(
     username_email: &str,
-    url_app: &str,
+    id: &str,
     password: &str,
     master_key: &str,
     ef: Option<&String>,
@@ -98,7 +98,7 @@ pub fn add(
     let mut file = read_json(ef).pe()?;
     let data = BASE64_STANDARD.encode(enc(&master_key, &username_email.to_string(), &password)?);
     let cont = Felids {
-        url_app: url_app.to_string(),
+        id: id.to_string(),
         data: data,
     };
 
@@ -121,23 +121,23 @@ pub fn add(
         ">>{}: added [{}] [{}]",
         "obsidian".bright_cyan().bold(),
         username_email.to_string().white().bold(),
-        url_app.bright_white().bold()
+        id.bright_white().bold()
     );
 
     Ok(())
 }
 
-pub fn get(url_app: String, master_key: String, ef: Option<&String>) -> anyhow::Result<()> {
+pub fn get(id: String, master_key: String, ef: Option<&String>) -> anyhow::Result<()> {
     let master_key = Zeroizing::new(master_key);
 
-    let dec = dec(&master_key, &url_app, ef)?;
+    let dec = dec(&master_key, &id, ef)?;
     let dec = String::from_utf8(dec)?;
     let decc: Vec<String> = dec.split('|').map(|s| s.to_string()).collect();
 
     println!(
         ">>{}: got [{}] [{}] [{}]",
         "obsidian".bright_cyan().bold(),
-        url_app.to_string().white().bold(),
+        id.to_string().white().bold(),
         &decc[0].bright_white().bold(),
         &decc[1].bright_white().bold()
     );
@@ -198,10 +198,10 @@ fn enc(master_key: &String, username_email: &String, password: &String) -> anyho
     Ok(finsh)
 }
 
-fn dec(master_key: &String, url_app: &String, ef: Option<&String>) -> anyhow::Result<Vec<u8>> {
+fn dec(master_key: &String, id: &String, ef: Option<&String>) -> anyhow::Result<Vec<u8>> {
     let read_json = read_json(ef)?;
 
-    let data = if let Some(s) = read_json.iter().find(|s| s.url_app == *url_app) {
+    let data = if let Some(s) = read_json.iter().find(|s| s.id == *id) {
         s.data.trim()
     } else {
         return Err(anyhow!("Couldn't get data"));
@@ -237,7 +237,7 @@ pub fn list(ef: Option<&String>) -> anyhow::Result<()> {
         println!(
             ">>{} url/app <{}> | data : <{}>",
             "obsidian".bright_cyan().bold(),
-            i.url_app.to_string().bright_white().bold(),
+            i.id.to_string().bright_white().bold(),
             i.data.to_string().bright_white().bold()
         );
     }
@@ -323,12 +323,12 @@ pub fn action_pass_val(action_pass: &str) -> anyhow::Result<()> {
     }
 }
 
-pub fn remove(url_app: &String, ef: Option<&String>) -> anyhow::Result<()> {
+pub fn remove(id: &String, ef: Option<&String>) -> anyhow::Result<()> {
     let mut read_json = read_json(ef)?;
 
     println!(
         ">> are you sure you want to delete <{}>",
-        url_app.bright_red().bold(),
+        id.bright_red().bold(),
     );
     print!(
         ">>[{}/{}]: ",
@@ -341,7 +341,7 @@ pub fn remove(url_app: &String, ef: Option<&String>) -> anyhow::Result<()> {
     stdin().read_line(&mut str)?;
 
     if str.trim() == "y" {
-        if let Some(o) = read_json.iter().position(|s| s.url_app == *url_app) {
+        if let Some(o) = read_json.iter().position(|s| s.id == *id) {
             read_json.remove(o);
         }
 
@@ -359,7 +359,7 @@ pub fn remove(url_app: &String, ef: Option<&String>) -> anyhow::Result<()> {
             println!(
                 ">>{} removed [{}]",
                 "obsidian".bright_cyan().bold(),
-                url_app.bright_white().bold()
+                id.bright_white().bold()
             );
         }
     }
@@ -378,14 +378,14 @@ fn set_perm_over_file(path: &PathBuf) -> anyhow::Result<()> {
     Ok(())
 }
 
-pub fn search(url_app: &String, ef: Option<&String>) -> anyhow::Result<()> {
+pub fn search(id: &String, ef: Option<&String>) -> anyhow::Result<()> {
     let read_json = read_json(ef)?;
 
-    if let Some(ry) = read_json.iter().find(|u| u.url_app == *url_app) {
+    if let Some(ry) = read_json.iter().find(|u| u.id == *id) {
         println!(
             ">> {} [{}] [{}]",
             "found".bright_cyan().bold(),
-            ry.url_app.to_string().bright_white().bold(),
+            ry.id.to_string().bright_white().bold(),
             ry.data.to_string().bright_white().bold()
         );
     }
@@ -393,7 +393,7 @@ pub fn search(url_app: &String, ef: Option<&String>) -> anyhow::Result<()> {
 }
 
 pub fn change(
-    url_app: &String,
+    id: &String,
     ef: Option<&String>,
     master_key: &String,
     password: &String,
@@ -406,7 +406,7 @@ pub fn change(
 
     if let Some(o) = read_json_i
         .iter_mut()
-        .find(|s| s.url_app == url_app.deref())
+        .find(|s| s.id == id.deref())
     {
         let enc = enc(&master_key, username_email, &password)?;
         let enc = BASE64_STANDARD.encode(enc);

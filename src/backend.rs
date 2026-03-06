@@ -26,7 +26,7 @@ pub mod safe {
     pub trait FileChecker {
         type Out;
 
-        fn check_existing_url_apps(self, url_app: &str, ef: Option<&String>) -> Self::Out;
+        fn check_existing_ids(self, id: &str, ef: Option<&String>) -> Self::Out;
     }
 
     pub trait AnyHowErrHelper {
@@ -60,13 +60,13 @@ pub mod safe {
     impl FileChecker for String {
         type Out = anyhow::Result<String>;
 
-        fn check_existing_url_apps(self, url_app: &str, ef: Option<&String>) -> Self::Out {
+        fn check_existing_ids(self, id: &str, ef: Option<&String>) -> Self::Out {
             let read_json = read_json(ef)?;
 
-            if let Some(o) = read_json.iter().find(|s| s.url_app == url_app) {
+            if let Some(o) = read_json.iter().find(|s| s.id == id) {
                 return Err(anyhow!(
                     "the url/app does already exist try another one or add special symbols beside it ! <{}>",
-                    o.url_app.to_string().bright_yellow().bold()
+                    o.id.to_string().bright_yellow().bold()
                 ));
             } else {
                 return Ok(self);
@@ -204,15 +204,15 @@ pub mod safe {
     }
 
     pub fn does_not_e(
-        url_app: &String,
+        id: &String,
         token: usize,
         data: &Vec<String>,
         ef: Option<&String>,
     ) -> anyhow::Result<()> {
-        if url_app
+        if id
             .deref()
             .to_string()
-            .check_existing_url_apps(&*data.get_token(&token)?, ef)
+            .check_existing_ids(&*data.get_token(&token)?, ef)
             .is_ok()
         {
             return Err(anyhow!("The url/app does not exist!"));

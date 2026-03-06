@@ -21,7 +21,7 @@ pub mod helpers_fn {
         index += 1;
         let password = data.get_token(&index).checker("password".to_string()).pe();
         index += 1;
-        let url_app = data.get_token(&index).checker("url/app".to_string()).pe();
+        let id = data.get_token(&index).checker("url/app".to_string()).pe();
         index += 1;
         let master_key = data
             .get_token(&index)
@@ -44,7 +44,7 @@ pub mod helpers_fn {
         };
 
         if res.is_ok() {
-            if let (Ok(us), Ok(p), Ok(u), Ok(m)) = (username_email, password, &url_app, master_key)
+            if let (Ok(us), Ok(p), Ok(u), Ok(m)) = (username_email, password, &id, master_key)
             {
                 if fs::File::open(
                     home_dirr()?
@@ -65,7 +65,7 @@ pub mod helpers_fn {
                         }
                     }
                 } else {
-                    let u = &u.to_string().check_existing_url_apps(u, ef).pe();
+                    let u = &u.to_string().check_existing_ids(u, ef).pe();
                     if let Ok(u) = u {
                         add(&us.to_string(), &u, &p, &m, ef).pe()?;
                     }
@@ -78,7 +78,7 @@ pub mod helpers_fn {
     pub fn get_helper(ef: Option<&String>, index: usize, data: &Vec<String>) -> anyhow::Result<()> {
         let mut indexx = index;
 
-        let url_app = data.get_token(&indexx).checker("app/url".to_string()).pe();
+        let id = data.get_token(&indexx).checker("app/url".to_string()).pe();
         indexx += 1;
         let master_key = data
             .get_token(&indexx)
@@ -98,7 +98,7 @@ pub mod helpers_fn {
         };
 
         does_not_e(
-            &url_app
+            &id
                 .as_ref()
                 .map_err(|_| anyhow!("moving url/app error!"))?
                 .to_string(),
@@ -109,7 +109,7 @@ pub mod helpers_fn {
         .pe()?;
 
         if res.is_ok() {
-            if let (Ok(o), Ok(p)) = (url_app, master_key) {
+            if let (Ok(o), Ok(p)) = (id, master_key) {
                 get(o, p, ef).pe()?
             }
         }
@@ -145,7 +145,7 @@ pub mod helpers_fn {
     ) -> anyhow::Result<()> {
         let mut indexx = index;
 
-        let url_app = data.get_token(&indexx).checker("url/app".to_string()).pe();
+        let id = data.get_token(&indexx).checker("url/app".to_string()).pe();
         indexx += 1;
         let ac_password = data
             .get_token(&indexx)
@@ -159,7 +159,7 @@ pub mod helpers_fn {
         };
 
         does_not_e(
-            &url_app
+            &id
                 .as_ref()
                 .map_err(|_| anyhow!("moving url/app error!"))?
                 .to_string(),
@@ -170,7 +170,7 @@ pub mod helpers_fn {
         .pe()?;
 
         if res.is_ok() {
-            if let Ok(o) = url_app {
+            if let Ok(o) = id {
                 remove(&o, ef)?;
             }
         }
@@ -184,7 +184,7 @@ pub mod helpers_fn {
     ) -> anyhow::Result<()> {
         let mut indexx = index;
 
-        let url_app = data.get_token(&indexx).checker("url/app".to_string()).pe();
+        let id = data.get_token(&indexx).checker("url/app".to_string()).pe();
         indexx += 1;
         let ac_password = data
             .get_token(&indexx)
@@ -198,7 +198,7 @@ pub mod helpers_fn {
         };
 
         does_not_e(
-            &url_app
+            &id
                 .as_ref()
                 .map_err(|_| anyhow!("moving url/app error!"))?
                 .to_string(),
@@ -209,7 +209,7 @@ pub mod helpers_fn {
         .pe()?;
 
         if res.is_ok() {
-            if let Ok(o) = url_app {
+            if let Ok(o) = id {
                 search(&o, ef).pe()?
             }
         }
@@ -223,7 +223,7 @@ pub mod helpers_fn {
     ) -> anyhow::Result<()> {
         let mut indexx = index;
 
-        let url_app = data.get_token(&indexx).checker("url/app".to_string()).pe();
+        let id = data.get_token(&indexx).checker("url/app".to_string()).pe();
         indexx += 1;
         let username_email = data
             .get_token(&indexx)
@@ -252,7 +252,7 @@ pub mod helpers_fn {
         };
 
         does_not_e(
-            &url_app
+            &id
                 .as_ref()
                 .map_err(|_| anyhow!("moving url/app error!"))?
                 .to_string(),
