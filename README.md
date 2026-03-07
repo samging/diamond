@@ -45,7 +45,7 @@ Launch the REPL:
 
 #### Add a password
 ```
-add <username/email> <password> <id> <master-key> <action-password>
+add <username/email> <password> <id> <master-key> <action-key>
 ```
 
 Example:
@@ -55,7 +55,7 @@ add user@example.com MyP@ssw0rd github MyMasterKey123456 MyActionPass123
 
 #### Get a password
 ```
-get <id> <master-key> <action-password>
+get <id> <master-key> <action-key>
 ```
 
 Example:
@@ -65,22 +65,22 @@ get github MyMasterKey123456 MyActionPass123
 
 #### List all entries
 ```
-list <action-password>
+list <action-key>
 ```
 
 #### Search for an entry
 ```
-search <id> <action-password>
+search <id> <action-key>
 ```
 
 #### Change an entry
 ```
-change <id> <username/email> <new-password> <master-key> <action-password>
+change <id> <username/email> <new-password> <master-key> <action-key>
 ```
 
 #### Remove an entry
 ```
-remove <id> <action-password>
+remove <id> <action-key>
 ```
 
 #### Generate a password

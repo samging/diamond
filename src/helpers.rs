@@ -33,14 +33,14 @@ pub mod helpers_fn {
         index += 1;
         let ac_password = data
             .get_token(&index)
-            .checker("action-password".to_string())?
-            .check_password_(&"action-password".to_string(), username_email.as_ref())
+            .checker("action-key".to_string())?
+            .check_password_(&"action-key".to_string(), username_email.as_ref())
             .pe();
 
-        let res = if ac_password.is_ok() {
-            action_password(&ac_password?).pe()
+        let res = if let Ok(ac) = &ac_password {
+            action_password(&ac).pe()
         } else {
-            return Err(anyhow!("missing action-password"));
+            return Err(anyhow!("missing action-key"));
         };
 
         if res.is_ok() {
@@ -56,6 +56,7 @@ pub mod helpers_fn {
                 {
                     _pre_()?;
                     pre_add(&us, &u, &p, &m, ef).pe()?;
+                    return Ok(());
                 }
                 if ef.is_some() {
                     if let Some(ef) = ef {
@@ -67,7 +68,7 @@ pub mod helpers_fn {
                 } else {
                     let u = &u.to_string().check_existing_ids(u, ef).pe();
                     if let Ok(u) = u {
-                        add(&us.to_string(), &u, &p, &m, ef).pe()?;
+                        add(&us.to_string(), &u, &p, &m,ef).pe()?;
                     }
                 }
             }
@@ -88,13 +89,13 @@ pub mod helpers_fn {
         indexx += 1;
         let action_pass = data
             .get_token(&indexx)
-            .checker("action-password".to_string())
+            .checker("action-key".to_string())
             .pe();
 
         let res = if action_pass.is_ok() {
             action_password(&action_pass?).pe()
         } else {
-            return Err(anyhow!("missing action-password"));
+            return Err(anyhow!("missing action-key"));
         };
 
         does_not_e(
@@ -123,13 +124,13 @@ pub mod helpers_fn {
     ) -> anyhow::Result<()> {
         let ac_pass = data
             .get_token(&index)
-            .checker("action-password".to_string())
+            .checker("action-key".to_string())
             .pe();
 
         let res = if ac_pass.is_ok() {
             action_password(&ac_pass?).pe()
         } else {
-            return Err(anyhow!("missing action-password"));
+            return Err(anyhow!("missing action-key"));
         };
 
         if res.is_ok() {
@@ -155,7 +156,7 @@ pub mod helpers_fn {
         let res = if ac_password.is_ok() {
             action_password(&ac_password?).pe()
         } else {
-            return Err(anyhow!("missing action-password"));
+            return Err(anyhow!("missing action-key"));
         };
 
         does_not_e(
@@ -194,7 +195,7 @@ pub mod helpers_fn {
         let res = if ac_password.is_ok() {
             action_password(&ac_password?).pe()
         } else {
-            return Err(anyhow!("missing action-password"));
+            return Err(anyhow!("missing action-key"));
         };
 
         does_not_e(
@@ -242,13 +243,13 @@ pub mod helpers_fn {
         indexx += 1;
         let ac_password = data
             .get_token(&indexx)
-            .checker("action-password".to_string())
+            .checker("action-key".to_string())
             .pe();
 
         let res = if ac_password.is_ok() {
             action_password(&ac_password?)
         } else {
-            return Err(anyhow!("missing action-password"));
+            return Err(anyhow!("missing action-key"));
         };
 
         does_not_e(

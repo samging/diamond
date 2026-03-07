@@ -76,7 +76,7 @@ fn interface() -> anyhow::Result<()> {
                             "obsidian".bright_blue().bold(),
                             "remove".bright_yellow().bold(),
                             "id".bright_yellow().bold(),
-                            "action-password".bright_yellow().bold()
+                            "action-key".bright_yellow().bold()
                         );
                     }
                     "--list" => {
@@ -85,7 +85,7 @@ fn interface() -> anyhow::Result<()> {
                             "Usage".bright_green().bold(),
                             "obsidian".bright_blue().bold(),
                             "list".bright_yellow().bold(),
-                            "action-password".bright_yellow().bold()
+                            "action-key".bright_yellow().bold()
                         );
                     }
                     "--search" => {
@@ -95,7 +95,7 @@ fn interface() -> anyhow::Result<()> {
                             "obsidian".bright_blue().bold(),
                             "search".bright_yellow().bold(),
                             "id".bright_yellow().bold(),
-                            "action-password".bright_yellow().bold(),
+                            "action-key".bright_yellow().bold(),
                         );
                     }
                     "--change" => {
@@ -108,7 +108,7 @@ fn interface() -> anyhow::Result<()> {
                             "username/email".bright_yellow().bold(),
                             "password".bright_yellow().bold(),
                             "master-key".bright_yellow().bold(),
-                            "action-password".bright_yellow().bold(),
+                            "action-key".bright_yellow().bold(),
                         );
                     }
                     "--clear" => {
@@ -252,7 +252,7 @@ fn interface() -> anyhow::Result<()> {
                             "external".bright_yellow().bold(),
                             "remove".bright_yellow().bold(),
                             "id".bright_yellow().bold(),
-                            "action-password".bright_yellow().bold(),
+                            "action-key".bright_yellow().bold(),
                             "path/name".bright_yellow().bold(),
                         );
                     }
@@ -263,7 +263,7 @@ fn interface() -> anyhow::Result<()> {
                             "obsidian".bright_blue().bold(),
                             "external".bright_yellow().bold(),
                             "list".bright_yellow().bold(),
-                            "action-password".bright_yellow().bold(),
+                            "action-key".bright_yellow().bold(),
                             "path/name".bright_yellow().bold()
                         );
                     }
@@ -275,7 +275,7 @@ fn interface() -> anyhow::Result<()> {
                             "external".bright_yellow().bold(),
                             "search".bright_yellow().bold(),
                             "id".bright_yellow().bold(),
-                            "action-password".bright_yellow().bold(),
+                            "action-key".bright_yellow().bold(),
                             "path/name".bright_yellow().bold()
                         );
                     }
@@ -290,7 +290,7 @@ fn interface() -> anyhow::Result<()> {
                             "username/email".bright_yellow().bold(),
                             "password".bright_yellow().bold(),
                             "master-key".bright_yellow().bold(),
-                            "action-password".bright_yellow().bold(),
+                            "action-key".bright_yellow().bold(),
                             "path/name".bright_yellow().bold(),
                         );
                     }

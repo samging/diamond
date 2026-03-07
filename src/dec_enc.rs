@@ -12,8 +12,7 @@ use std::{
 use zeroize::Zeroizing;
 
 use aes_gcm::{
-    AeadCore, Aes256Gcm, Key, KeyInit, Nonce,
-    aead::{Aead, OsRng, rand_core::RngCore},
+    AeadCore, Aes256Gcm, Key, KeyInit, Nonce, aead::{Aead, OsRng, rand_core::RngCore}
 };
 use argon2::Argon2;
 use serde::{Deserialize, Serialize};
@@ -21,7 +20,7 @@ use serde::{Deserialize, Serialize};
 use crate::backend::safe::AnyHowErrHelper;
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Felids {
+pub struct Fields {
     pub id: String,
     pub data: String,
 }
@@ -56,7 +55,7 @@ pub fn pre_add(
 
     let data = BASE64_STANDARD.encode(data);
 
-    let cont = Felids {
+    let cont = Fields {
         id: id.to_string(),
         data: data,
     };
@@ -66,12 +65,13 @@ pub fn pre_add(
     let json = serde_json::to_string(&vec)?;
 
     if let Some(o) = ef {
-        fs::File::create(home_dirr()?.join(o))?;
-        fs::write(home_dirr()?.join(o), json)?;
+        let json_enc = BASE64_STANDARD.encode(enc_all(json)?);
+        fs::write(home_dirr()?.join(o), json_enc)?;
         #[cfg(unix)]
         set_perm_over_file(&home_dirr()?.join(o))?;
     } else {
-        fs::write(home_dirr()?.join("obsidian/obs.json"), json)?;
+        let json_enc = BASE64_STANDARD.encode(enc_all( json)?);
+        fs::write(home_dirr()?.join("obsidian/obs.json"), json_enc)?;
         #[cfg(unix)]
         set_perm_over_file(&home_dirr()?.join("obsidian/obs.json"))?;
     }
@@ -97,7 +97,7 @@ pub fn add(
 
     let mut file = read_json(ef).pe()?;
     let data = BASE64_STANDARD.encode(enc(&master_key, &username_email.to_string(), &password)?);
-    let cont = Felids {
+    let cont = Fields {
         id: id.to_string(),
         data: data,
     };
@@ -107,12 +107,13 @@ pub fn add(
     let json = serde_json::to_string(&file)?;
 
     if let Some(o) = ef {
-        fs::File::create(home_dirr()?.join(o))?;
-        fs::write(home_dirr()?.join(o), json)?;
+        let enc_json = BASE64_STANDARD.encode(enc_all(json)?);
+        fs::write(home_dirr()?.join(o), enc_json)?;
         #[cfg(unix)]
         set_perm_over_file(&home_dirr()?.join(o))?;
     } else {
-        fs::write(home_dirr()?.join("obsidian/obs.json"), json)?;
+        let enc_json = BASE64_STANDARD.encode(enc_all(json)?);
+        fs::write(home_dirr()?.join("obsidian/obs.json"), enc_json)?;
         #[cfg(unix)]
         set_perm_over_file(&home_dirr()?.join("obsidian/obs.json"))?;
     }
@@ -145,7 +146,7 @@ pub fn get(id: String, master_key: String, ef: Option<&String>) -> anyhow::Resul
     Ok(())
 }
 
-pub fn read_json(ef: Option<&String>) -> anyhow::Result<Vec<Felids>> {
+pub fn read_json(ef: Option<&String>) -> anyhow::Result<Vec<Fields>> {
     let mut s = String::new();
 
     let mut o = if let Some(ef) = ef {
@@ -162,8 +163,10 @@ pub fn read_json(ef: Option<&String>) -> anyhow::Result<Vec<Felids>> {
     };
 
     o.read_to_string(&mut s)?;
+    let dec = BASE64_STANDARD.decode(&s.trim())?;
+    let dec_data = dec_all(dec)?;
 
-    if let Ok(vec) = serde_json::from_str::<Vec<Felids>>(&mut s) {
+    if let Ok(vec) = serde_json::from_str::<Vec<Fields>>(&String::from_utf8(dec_data)?) {
         return Ok(vec);
     } else {
         return Err(anyhow!("Couldn't read json file"));
@@ -348,11 +351,13 @@ pub fn remove(id: &String, ef: Option<&String>) -> anyhow::Result<()> {
         let json = serde_json::to_string(&read_json)?;
 
         if let Some(ef) = ef {
-            fs::write(home_dirr()?.join(ef), json)?;
+            let enc_json = BASE64_STANDARD.encode(enc_all(json)?);
+            fs::write(home_dirr()?.join(ef), &enc_json)?;
             #[cfg(unix)]
             set_perm_over_file(&home_dirr()?.join(ef))?;
         } else {
-            fs::write(home_dirr()?.join("obsidian/obs.json"), json)?;
+            let enc_json = BASE64_STANDARD.encode(enc_all(json)?);
+            fs::write(home_dirr()?.join("obsidian/obs.json"), enc_json)?;
             #[cfg(unix)]
             set_perm_over_file(&home_dirr()?.join("obsidian/obs.json"))?;
 
@@ -413,16 +418,18 @@ pub fn change(
         o.data = enc;
         let json = serde_json::to_string(&read_json_i)?;
         if let Some(ef) = ef {
-            fs::write(home_dirr()?.join(ef), &json)?;
+            let enc_json = BASE64_STANDARD.encode(enc_all(json)?);
+            fs::write(home_dirr()?.join(ef), &enc_json)?;
             #[cfg(unix)]
             set_perm_over_file(&home_dirr()?.join(ef))?;
         } else {
+            let enc_json = BASE64_STANDARD.encode(enc_all(json)?);
             fs::write(
                 home_dirr()?
                     .join("obsidian/obs.json")
                     .to_string_lossy()
                     .to_string(),
-                &json,
+                &enc_json,
             )?;
             #[cfg(unix)]
             set_perm_over_file(&home_dirr()?.join("obsidian/obs.json"))?;
@@ -444,4 +451,43 @@ pub fn generate_password() -> anyhow::Result<String> {
         gen_pass.bright_yellow().bold()
     );
     Ok(gen_pass)
+}
+
+fn enc_all (data:String) -> anyhow::Result<Vec<u8>> { 
+    let mut get_ac = fs::File::open(home_dirr()?.join("obsidian/obs_password.txt"))?;
+    let mut storeit = String::new();
+    get_ac.read_to_string(&mut storeit)?;
+
+    let dec = BASE64_STANDARD.decode(&storeit.trim())?;
+    let (_ , decc) = dec.split_at(16);
+
+    let key = Key::<Aes256Gcm>::from_slice(&decc);
+    let cip = Aes256Gcm::new(&key);
+    let nonce = Aes256Gcm::generate_nonce(&mut OsRng);
+
+    let data = cip.encrypt(&nonce, data.as_bytes()).map_err(|_| anyhow!("Couldn't enc vault"))?;
+
+    let mut vec = Vec::new();
+    vec.extend_from_slice(&nonce);
+    vec.extend_from_slice(&data);
+
+    return Ok(vec);
+}
+
+fn dec_all (data:Vec<u8>) -> anyhow::Result<Vec<u8>> {
+    let mut get_ac = fs::File::open(home_dirr()?.join("obsidian/obs_password.txt"))?;
+    let mut store_it = String::new();
+    get_ac.read_to_string(&mut store_it)?;
+
+    let dec = BASE64_STANDARD.decode(store_it)?;
+    let (_ , decc) = dec.split_at(16);
+    let (nonce , data) = data.split_at(12);
+
+    let key = Key::<Aes256Gcm>::from_slice(&decc);
+    let cip = Aes256Gcm::new(&key);
+    let nonce = Nonce::from_slice(nonce);
+
+    let data = cip.decrypt(&nonce, data).map_err(|_| anyhow!("Couldn't dec vault"))?;
+
+    return Ok(data);
 }
