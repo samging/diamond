@@ -2,7 +2,6 @@ mod backend;
 mod dec_enc;
 use anyhow::anyhow;
 use colored::Colorize;
-use std::io::{Write, stdout};
 mod helpers;
 mod test;
 use rustyline::{DefaultEditor, error::ReadlineError};
@@ -55,7 +54,7 @@ fn interface() -> anyhow::Result<()> {
                             "add".bright_yellow().bold(),
                             "username/email".bright_yellow().bold(),
                             "obsidian".bright_yellow().bold(),
-                            "url/app".bright_yellow().bold(),
+                            "id".bright_yellow().bold(),
                             "master-key".bright_yellow().bold(),
                             "add-password".bright_yellow().bold(),
                         );
@@ -66,7 +65,7 @@ fn interface() -> anyhow::Result<()> {
                             "Usage".bright_green().bold(),
                             "obsidian".bright_blue().bold(),
                             "get".bright_yellow().bold(),
-                            "url/app".bright_yellow().bold(),
+                            "id".bright_yellow().bold(),
                             "master-key".bright_yellow().bold()
                         );
                     }
@@ -76,7 +75,7 @@ fn interface() -> anyhow::Result<()> {
                             "Usage".bright_green().bold(),
                             "obsidian".bright_blue().bold(),
                             "remove".bright_yellow().bold(),
-                            "url/app".bright_yellow().bold(),
+                            "id".bright_yellow().bold(),
                             "action-password".bright_yellow().bold()
                         );
                     }
@@ -95,7 +94,7 @@ fn interface() -> anyhow::Result<()> {
                             "Usage".bright_green().bold(),
                             "obsidian".bright_blue().bold(),
                             "search".bright_yellow().bold(),
-                            "url/app".bright_yellow().bold(),
+                            "id".bright_yellow().bold(),
                             "action-password".bright_yellow().bold(),
                         );
                     }
@@ -105,7 +104,7 @@ fn interface() -> anyhow::Result<()> {
                             "Usage".bright_green().bold(),
                             "obsidian".bright_blue().bold(),
                             "change".bright_yellow().bold(),
-                            "url/app".bright_yellow().bold(),
+                            "id".bright_yellow().bold(),
                             "username/email".bright_yellow().bold(),
                             "password".bright_yellow().bold(),
                             "master-key".bright_yellow().bold(),
@@ -227,7 +226,7 @@ fn interface() -> anyhow::Result<()> {
                             "add".bright_yellow().bold(),
                             "username/email".bright_yellow().bold(),
                             "obsidian".bright_yellow().bold(),
-                            "url/app".bright_yellow().bold(),
+                            "id".bright_yellow().bold(),
                             "master-key".bright_yellow().bold(),
                             "add-password".bright_yellow().bold(),
                             "path/name".bright_yellow().bold(),
@@ -240,7 +239,7 @@ fn interface() -> anyhow::Result<()> {
                             "obsidian".bright_blue().bold(),
                             "external".bright_yellow().bold(),
                             "get".bright_yellow().bold(),
-                            "url/app".bright_yellow().bold(),
+                            "id".bright_yellow().bold(),
                             "master-key".bright_yellow().bold(),
                             "path/name".bright_yellow().bold(),
                         );
@@ -252,7 +251,7 @@ fn interface() -> anyhow::Result<()> {
                             "obsidian".bright_blue().bold(),
                             "external".bright_yellow().bold(),
                             "remove".bright_yellow().bold(),
-                            "url/app".bright_yellow().bold(),
+                            "id".bright_yellow().bold(),
                             "action-password".bright_yellow().bold(),
                             "path/name".bright_yellow().bold(),
                         );
@@ -275,7 +274,7 @@ fn interface() -> anyhow::Result<()> {
                             "obsidian".bright_blue().bold(),
                             "external".bright_yellow().bold(),
                             "search".bright_yellow().bold(),
-                            "url/app".bright_yellow().bold(),
+                            "id".bright_yellow().bold(),
                             "action-password".bright_yellow().bold(),
                             "path/name".bright_yellow().bold()
                         );
@@ -287,7 +286,7 @@ fn interface() -> anyhow::Result<()> {
                             "obsidian".bright_blue().bold(),
                             "external".bright_yellow().bold(),
                             "change".bright_yellow().bold(),
-                            "url/app".bright_yellow().bold(),
+                            "id".bright_yellow().bold(),
                             "username/email".bright_yellow().bold(),
                             "password".bright_yellow().bold(),
                             "master-key".bright_yellow().bold(),
@@ -323,8 +322,14 @@ fn interface() -> anyhow::Result<()> {
                 std::process::exit(0);
             }
             "clear" => {
-                print!("\x1B[2J\x1B[1;1H");
-                stdout().flush()?;
+                #[cfg(unix)]
+                {
+                    std::process::Command::new("clear").status()?;
+                }
+                #[cfg(windows)]
+                {
+                    std::process::Command::new("cmd").args(["/C" , "cls"]).status()?;
+                }
                 continue;
             }
             "gp" => {

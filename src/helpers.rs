@@ -21,7 +21,7 @@ pub mod helpers_fn {
         index += 1;
         let password = data.get_token(&index).checker("password".to_string()).pe();
         index += 1;
-        let id = data.get_token(&index).checker("url/app".to_string()).pe();
+        let id = data.get_token(&index).checker("id".to_string()).pe();
         index += 1;
         let master_key = data
             .get_token(&index)
@@ -100,7 +100,7 @@ pub mod helpers_fn {
         does_not_e(
             &id
                 .as_ref()
-                .map_err(|_| anyhow!("moving url/app error!"))?
+                .map_err(|_| anyhow!("moving id error!"))?
                 .to_string(),
             index,
             &data,
@@ -145,7 +145,7 @@ pub mod helpers_fn {
     ) -> anyhow::Result<()> {
         let mut indexx = index;
 
-        let id = data.get_token(&indexx).checker("url/app".to_string()).pe();
+        let id = data.get_token(&indexx).checker("id".to_string()).pe();
         indexx += 1;
         let ac_password = data
             .get_token(&indexx)
@@ -161,7 +161,7 @@ pub mod helpers_fn {
         does_not_e(
             &id
                 .as_ref()
-                .map_err(|_| anyhow!("moving url/app error!"))?
+                .map_err(|_| anyhow!("moving id error!"))?
                 .to_string(),
             index,
             &data,
@@ -184,7 +184,7 @@ pub mod helpers_fn {
     ) -> anyhow::Result<()> {
         let mut indexx = index;
 
-        let id = data.get_token(&indexx).checker("url/app".to_string()).pe();
+        let id = data.get_token(&indexx).checker("id".to_string()).pe();
         indexx += 1;
         let ac_password = data
             .get_token(&indexx)
@@ -200,7 +200,7 @@ pub mod helpers_fn {
         does_not_e(
             &id
                 .as_ref()
-                .map_err(|_| anyhow!("moving url/app error!"))?
+                .map_err(|_| anyhow!("moving id error!"))?
                 .to_string(),
             index,
             &data,
@@ -223,7 +223,7 @@ pub mod helpers_fn {
     ) -> anyhow::Result<()> {
         let mut indexx = index;
 
-        let id = data.get_token(&indexx).checker("url/app".to_string()).pe();
+        let id = data.get_token(&indexx).checker("id".to_string()).pe();
         indexx += 1;
         let username_email = data
             .get_token(&indexx)
@@ -254,7 +254,7 @@ pub mod helpers_fn {
         does_not_e(
             &id
                 .as_ref()
-                .map_err(|_| anyhow!("moving url/app error!"))?
+                .map_err(|_| anyhow!("moving id error!"))?
                 .to_string(),
             index,
             &data,
@@ -265,7 +265,7 @@ pub mod helpers_fn {
         if res.is_ok() {
             if let (Ok(ue), Ok(pw), Ok(mk)) = (username_email, passwoed, master_key) {
                 change(
-                    &data.get_token(&index).checker("url/app".to_string())?,
+                    &data.get_token(&index).checker("id".to_string())?,
                     ef,
                     &mk,
                     &pw,
@@ -293,7 +293,7 @@ pub mod helpers_fn {
             "get".bright_purple().bold()
         );
         println!(
-            ">> <{}: used to remove data from the file> / <{}: used to search for data by there url/app name>",
+            ">> <{}: used to remove data from the file> / <{}: used to search for data by there id name>",
             "remove".bright_purple().bold(),
             "search".bright_purple().bold()
         );
@@ -303,13 +303,13 @@ pub mod helpers_fn {
             "exit".bright_purple().bold()
         );
         println!(
-            ">> <{}: used to list all the data> / <{}: used to change data using there url/app name>",
+            ">> <{}: used to list all the data> / <{}: used to change data using there id name>",
             "list".bright_purple().bold(),
             "change".bright_purple().bold()
         );
 
         println!(
-            ">> <{}: used to list all the data> / <{}: used to change data using there url/app name>",
+            ">> <{}: used to list all the data> / <{}: used to change data using there id name>",
             "list".bright_purple().bold(),
             "change".bright_purple().bold()
         );

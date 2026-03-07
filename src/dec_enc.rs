@@ -66,7 +66,7 @@ pub fn pre_add(
     let json = serde_json::to_string(&vec)?;
 
     if let Some(o) = ef {
-        fs::File::create(o)?;
+        fs::File::create(home_dirr()?.join(o))?;
         fs::write(home_dirr()?.join(o), json)?;
         #[cfg(unix)]
         set_perm_over_file(&home_dirr()?.join(o))?;
@@ -107,7 +107,7 @@ pub fn add(
     let json = serde_json::to_string(&file)?;
 
     if let Some(o) = ef {
-        fs::File::create(o)?;
+        fs::File::create(home_dirr()?.join(o))?;
         fs::write(home_dirr()?.join(o), json)?;
         #[cfg(unix)]
         set_perm_over_file(&home_dirr()?.join(o))?;
@@ -235,7 +235,7 @@ pub fn list(ef: Option<&String>) -> anyhow::Result<()> {
 
     for i in read_json {
         println!(
-            ">>{} url/app <{}> | data : <{}>",
+            ">>{} id <{}> | data : <{}>",
             "obsidian".bright_cyan().bold(),
             i.id.to_string().bright_white().bold(),
             i.data.to_string().bright_white().bold()

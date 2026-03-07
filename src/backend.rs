@@ -65,7 +65,7 @@ pub mod safe {
 
             if let Some(o) = read_json.iter().find(|s| s.id == id) {
                 return Err(anyhow!(
-                    "the url/app does already exist try another one or add special symbols beside it ! <{}>",
+                    "the id does already exist try another one or add special symbols beside it ! <{}>",
                     o.id.to_string().bright_yellow().bold()
                 ));
             } else {
@@ -215,7 +215,7 @@ pub mod safe {
             .check_existing_ids(&*data.get_token(&token)?, ef)
             .is_ok()
         {
-            return Err(anyhow!("The url/app does not exist!"));
+            return Err(anyhow!("The id does not exist!"));
         }
         Ok(())
     }
