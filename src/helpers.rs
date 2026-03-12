@@ -5,7 +5,9 @@ use crate::{
         safe::{
             AnyHowErrHelper, Checkers, FileChecker, MasterKey, PasswordChecker, id_does_not_exsist,
         },
-    }, commands::export, toml
+    },
+    commands::{export, import},
+    toml,
 };
 use crate::{
     commands::{add, get, pre_add, remove, search},
@@ -15,7 +17,6 @@ use anyhow::anyhow;
 use std::{fs, path::PathBuf};
 
 pub fn add_helper(
-    ef: Option<&str>,
     mut index: usize,
     data: &Vec<String>,
     data_token: &Vec<String>,
@@ -37,7 +38,9 @@ pub fn add_helper(
         .master_key_checker()
         .pe();
     index += 1;
-    let note = data_token.get_token(&index)?;
+    let note = data_token.get(index).map(|s| s.as_str());
+    index += 1;
+    let ef = data_token.get(index).map(|s| s.as_str());
 
     let username_4_check_password_strengrh = extract_string_value_from_result(&username_email);
     let master_key =
@@ -74,10 +77,9 @@ pub fn add_helper(
 }
 
 pub fn get_helper(
-    ef: Option<&str>,
     mut index: usize,
     data: &Vec<String>,
-    does_not_e_n: usize,
+    data_token: &Vec<String>,
 ) -> anyhow::Result<()> {
     let id = data.get_token(&index).checker("id".to_string()).pe();
     index += 1;
@@ -87,12 +89,14 @@ pub fn get_helper(
         .to_string()
         .master_key_checker()
         .pe();
+    index += 1;
+    let ef = data_token.get(index).map(|s| s.as_str());
 
     id_does_not_exsist(
         &id.as_ref()
             .map_err(|_| anyhow!("moving id error!"))?
             .to_string(),
-        does_not_e_n,
+        1,
         &data,
         ef,
     )
@@ -105,10 +109,9 @@ pub fn get_helper(
 }
 
 pub fn remove_helper(
-    ef: Option<&str>,
     mut index: usize,
     data: &Vec<String>,
-    does_not_e_n: usize,
+    data_token: &Vec<String>,
 ) -> anyhow::Result<()> {
     let id = data.get_token(&index).checker("id".to_string()).pe();
     index += 1;
@@ -120,11 +123,14 @@ pub fn remove_helper(
         .master_key_checker()
         .pe()?;
 
+    index += 1;
+    let ef = data_token.get(index).map(|s| s.as_str());
+
     id_does_not_exsist(
         &id.as_ref()
             .map_err(|_| anyhow!("moving id error!"))?
             .to_string(),
-        does_not_e_n,
+        1,
         &data,
         ef,
     )
@@ -138,18 +144,19 @@ pub fn remove_helper(
 }
 
 pub fn search_helper(
-    ef: Option<&str>,
-    index: usize,
+    mut index: usize,
     data: &Vec<String>,
-    does_not_e_n: usize,
+    data_token: &Vec<String>,
 ) -> anyhow::Result<()> {
     let id = data.get_token(&index).checker("id".to_string()).pe();
+    index += 1;
+    let ef = data_token.get(index).map(|s| s.as_str());
 
     id_does_not_exsist(
         &id.as_ref()
             .map_err(|_| anyhow!("moving id error!"))?
             .to_string(),
-        does_not_e_n,
+        1,
         &data,
         ef,
     )
@@ -162,18 +169,58 @@ pub fn search_helper(
     Ok(())
 }
 
-pub fn export_helper (data: &Vec<String> , ef: Option<&str> , mut index: usize) -> anyhow::Result<()> {
-    let name_of_export = data.get_token(&index).checker("name of export".to_string()).pe();
-    index +=1;
-    let master_key = data.get_token(&index).checker("master-key".to_string())?.to_string().master_key_checker().pe().check_password_strength("master-key", "").pe();
+pub fn export_helper(
+    data: &Vec<String>,
+    mut index: usize,
+    data_token: &Vec<String>,
+) -> anyhow::Result<()> {
+    let name_of_export = data
+        .get_token(&index)
+        .checker("name of export".to_string())
+        .pe();
+    index += 1;
+    let master_key = data
+        .get_token(&index)
+        .checker("master-key".to_string())?
+        .to_string()
+        .master_key_checker()
+        .pe()
+        .check_password_strength("master-key", "")
+        .pe();
+    index += 1;
+    let ef = data_token.get(index).map(|s| s.as_str());
 
-    if let (Ok(name) , Ok(master)) = (name_of_export , master_key) {
+    if let (Ok(name), Ok(master)) = (name_of_export, master_key) {
         export(ef, name, &master).pe()?;
     }
     Ok(())
-} 
+}
 
-pub fn help_helper_1() -> anyhow::Result<()> {
+pub fn import_helper(data: &Vec<String>, mut index: usize) -> anyhow::Result<()> {
+    let new_name = data
+        .get_token(&index)
+        .checker("the name of the vault".to_string())
+        .pe();
+    index += 1;
+    let master_key = data
+        .get_token(&index)
+        .checker("master-key".to_string())?
+        .to_string()
+        .master_key_checker()
+        .pe();
+    index += 1;
+    let path_of_vault = data
+        .get_token(&index)
+        .checker("the path of the vault".to_string())
+        .pe();
+
+    if let (Ok(name), Ok(mk), Ok(pov)) = (new_name, master_key, path_of_vault) {
+        import(&mk, name, pov).pe()?;
+    }
+    Ok(())
+}
+
+pub fn help_helper_() -> anyhow::Result<()> {
     use colored::Colorize;
 
     println!(
@@ -213,5 +260,106 @@ pub fn help_helper_1() -> anyhow::Result<()> {
         ">> <{}: used to export vaults> /",
         "export".bright_purple().bold(),
     );
+    Ok(())
+}
+
+pub fn help_helper (data: &Vec<String> , index:usize) -> anyhow::Result<()> {
+    use colored::Colorize;
+    match data.get_token(&index)?.trim() {
+        "--add" => {
+                println!(
+                    ">>{}: [{}] [{}] [{}] [{}] [{}] [{}] [<{}>] [<{}>]",
+                    "Usage".bright_green().bold(),
+                    "diamond".bright_blue().bold(),
+                    "add".bright_yellow().bold(),
+                    "username/email".bright_yellow().bold(),
+                    "password".bright_yellow().bold(),
+                    "id".bright_yellow().bold(),
+                    "master-key".bright_yellow().bold(),
+                    "Option: note".bright_yellow().bold(),
+                    "Option: external path".bright_yellow().bold(),
+                );
+            }
+            "--get" => {
+                println!(
+                    ">>{}: [{}] [{}] [{}] [{}] [<{}>]",
+                    "Usage".bright_green().bold(),
+                    "diamond".bright_blue().bold(),
+                    "get".bright_yellow().bold(),
+                    "id".bright_yellow().bold(),
+                    "master-key".bright_yellow().bold(),
+                    "Option: external path".bright_yellow().bold(),
+                );
+            }
+            "--remove" => {
+                println!(
+                    ">>{}: [{}] [{}] [{}] [{}] [<{}>]",
+                    "Usage".bright_green().bold(),
+                    "diamond".bright_blue().bold(),
+                    "remove".bright_yellow().bold(),
+                    "id".bright_yellow().bold(),
+                    "master-key".bright_yellow().bold(),
+                    "Option: external path".bright_yellow().bold()
+                );
+            }
+            "--list" => {
+                println!(
+                    ">>{}: [{}] [{}] [<{}>]",
+                    "Usage".bright_green().bold(),
+                    "diamond".bright_blue().bold(),
+                    "list".bright_yellow().bold(),
+                    "Option: external path".bright_yellow().bold(),
+                );
+            }
+            "--search" => {
+                println!(
+                    ">>{}: [{}] [{}] [{}] [<{}>]",
+                    "Usage".bright_green().bold(),
+                    "diamond".bright_blue().bold(),
+                    "search".bright_yellow().bold(),
+                    "id".bright_yellow().bold(),
+                    "Option: external path".bright_yellow().bold(),
+                );
+            }
+            "--clear" => {
+                println!(
+                    ">>{}: [{}] [{}]",
+                    "Usage".bright_green().bold(),
+                    "diamond".bright_blue().bold(),
+                    "clear".bright_yellow().bold(),
+                );
+            }
+            "--exit" => {
+                println!(
+                    ">>{}: [{}] [{}]",
+                    "Usage".bright_green().bold(),
+                    "diamond".bright_blue().bold(),
+                    "exit".bright_yellow().bold(),
+                );
+            }
+            "--export" => {
+                println!(
+                    ">>{}: [{}] [{}] [{}] [{}] [{}]",
+                    "Usage".bright_green().bold(),
+                    "diamond".bright_blue().bold(),
+                    "export".bright_yellow().bold(),
+                    "(name of expoert).json".bright_yellow().bold(),
+                    "master-key".bright_yellow().bold(),
+                    "Option: external path".bright_yellow().bold(),
+                );
+            }
+            "-l" => {
+                help_helper_()?;
+            }
+            _ => {
+                if !data.get_token(&1)?.is_empty() {
+                    println!(
+                        ">> The flag [{}] you used is not vaild flag please use [{} -l] to check all the available flags",
+                        data.get_token(&1)?.bright_red().bold(),
+                        "help".bright_yellow().bold()
+                    )
+                }
+            }
+    }
     Ok(())
 }

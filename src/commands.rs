@@ -11,7 +11,7 @@ use zeroize::Zeroizing;
 
 use crate::{
     backend::safe::AnyHowErrHelper,
-    crypto::{self, enc_vault},
+    crypto::{self, dec_vault, enc_vault},
     toml,
     vault::home_dirr,
 };
@@ -25,7 +25,7 @@ pub fn pre_add(
     id: &str,
     password: &str,
     master_key: &str,
-    note: &str,
+    note: Option<&str>,
     ef: Option<&str>,
 ) -> anyhow::Result<()> {
     let password = Zeroizing::new(password.to_string());
@@ -49,7 +49,7 @@ pub fn pre_add(
             salt,
             nonce,
             data,
-            note: Some(note.to_string()),
+            note: note.map(String::from),
             date: date_of_adding,
         },
     };
@@ -81,7 +81,7 @@ pub fn add(
     id: &str,
     password: &str,
     master_key: &str,
-    note: &str,
+    note: Option<&str>,
     ef: Option<&str>,
 ) -> anyhow::Result<()> {
     let password = Zeroizing::new(password.to_string());
@@ -105,7 +105,7 @@ pub fn add(
             salt,
             nonce,
             data,
-            note: Some(note.to_string()),
+            note: note.map(String::from),
             date: date_of_adding,
         },
     };
@@ -263,6 +263,7 @@ pub fn generate_password() -> anyhow::Result<String> {
 pub fn export(ef: Option<&str>, name_of_export: &str, master_key: &str) -> anyhow::Result<()> {
     let mut vault = String::new();
     let main_vault_path: PathBuf = toml()?.dependencies.main_vault_path.into();
+    let master_key = Zeroizing::new(master_key.to_string());
 
     if let Some(ef) = ef {
         fs::File::open(home_dirr()?.join(ef))?.read_to_string(&mut vault)?;
@@ -270,7 +271,7 @@ pub fn export(ef: Option<&str>, name_of_export: &str, master_key: &str) -> anyho
         fs::File::open(main_vault_path.join("gem.json"))?.read_to_string(&mut vault)?;
     };
 
-    let (salt, nonce, data) = enc_vault(master_key, vault)?;
+    let (salt, nonce, data) = enc_vault(&*master_key, vault)?;
     let (encoded_salt, encoded_nonce, encoded_vault) = (
         BASE64_STANDARD.encode(salt),
         BASE64_STANDARD.encode(nonce),
@@ -284,6 +285,15 @@ pub fn export(ef: Option<&str>, name_of_export: &str, master_key: &str) -> anyho
     let json = serde_json::to_string_pretty(&content)?;
     fs::write(home_dirr()?.join(name_of_export), json)?;
 
-    println!(">>{}" , "exporting is done!".bright_cyan().bold());
+    println!(">>{}", "exporting is done!".bright_cyan().bold());
+    Ok(())
+}
+
+pub fn import(master_key: &str, new_name: &str, path_of_vault: &str) -> anyhow::Result<()> {
+    let master_key = Zeroizing::new(master_key.to_string());
+    let dec: String = String::from_utf8(dec_vault(&*master_key.as_str(), path_of_vault)?)?;
+    let json_args = serde_json::from_str::<Vec<Fields>>(dec.trim())?;
+    let json = serde_json::to_string_pretty(&json_args)?;
+    fs::write(home_dirr()?.join(new_name), json)?;
     Ok(())
 }

@@ -12,12 +12,12 @@ use serde::{Deserialize, Serialize};
 
 use crate::{toml::toml, vault::home_dirr};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Fields {
     pub entry: Entry,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Entry {
     pub id: String,
     pub salt: String,
@@ -116,7 +116,7 @@ pub fn dec(master_key: &str, id: &str, ef: Option<&str>) -> anyhow::Result<Vec<u
 
     let dec = cip
         .decrypt(nonce, data.as_ref())
-        .map_err(|_| anyhow!("Couldn't dec data | try again with the correct master-key!"))?;
+        .map_err(|e| anyhow!("Couldn't dec data | try again with the correct master-key! <{e}>"))?;
 
     Ok(dec)
 }
@@ -143,4 +143,65 @@ pub fn enc_vault(
         .map_err(|_| anyhow!("Couldn't enc data"))?;
 
     Ok((salt, nonce.into(), enc))
+}
+
+fn read_json_import(ef: Option<&str>, name_of_vault: &str) -> anyhow::Result<Vec<VaultExport>> {
+    let mut s = String::new();
+
+    let main_vault_path: PathBuf = toml()?.dependencies.main_vault_path.into();
+
+    let mut o = if let Some(ef) = ef {
+        let o = fs::File::open(home_dirr()?.join(ef))?;
+        o
+    } else {
+        let o = fs::File::open(
+            main_vault_path
+                .join(name_of_vault)
+                .to_string_lossy()
+                .to_string(),
+        )?;
+        o
+    };
+
+    o.read_to_string(&mut s)?;
+
+    if let Ok(vec) = serde_json::from_str::<VaultExport>(&s.trim()) {
+        return Ok(vec![vec]);
+    } else {
+        return Err(anyhow!("Couldn't read json file"));
+    }
+}
+
+pub fn dec_vault(master_key: &str, path_of_vault: &str) -> anyhow::Result<Vec<u8>> {
+    let read_json = read_json_import(Some(path_of_vault), path_of_vault)?;
+
+    for i in read_json {
+        let salt = i.salt;
+        let nonce = i.nonce;
+        let vault = i.vault;
+
+        let (salt_decoded, nonce_decoded, vault_decoded) = (
+            BASE64_STANDARD.decode(salt)?,
+            BASE64_STANDARD.decode(nonce)?,
+            BASE64_STANDARD.decode(vault)?,
+        );
+
+        let mut out_master = Zeroizing::new([0u8; 32]);
+        Argon2::default()
+            .hash_password_into(master_key.as_bytes(), &salt_decoded, &mut *out_master)
+            .map_err(|e| anyhow!("Couldn't hash the master-key <{e}>"))?;
+
+        let key = Key::<Aes256Gcm>::from_slice(&*out_master);
+        let cip = Aes256Gcm::new(&key);
+        let nonce = Nonce::from_slice(&nonce_decoded);
+
+        let dec = cip.decrypt(&nonce, &*vault_decoded).map_err(|e| {
+            anyhow!("Couldn't dec data | try again with the correct master-key! <{e}>")
+        })?;
+
+        return Ok(dec);
+    }
+    Err(anyhow!(
+        "Couldn't dec data | try again with the correct master-key!"
+    ))
 }
