@@ -1,17 +1,5 @@
 <p align="center">
-      __________________
-    .-'  \ _.-''-._ /  '-.
-  .-/\   .'.      .'.   /\-.
- _'/  \.'   '.  .'   './  \'_
-:======:======::======:======:  
- '. '.  \     ''     /  .' .'
-   '. .  \   :  :   /  . .'
-     '.'  \  '  '  /  '.'
-       ':  \:    :/  :'
-         '. \    / .'
-           '.\  /.'    Safe Place For Your Information
-             '\/'
-
+  <img src="assets/ascii-art-image.png" alt="Diamond Vault">
 </p>
 
 A secure, REPL based password manager built in Rust with military-grade encryption.
