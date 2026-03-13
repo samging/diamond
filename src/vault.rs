@@ -1,3 +1,4 @@
+use crate::crypto::Fields;
 use crate::toml;
 use anyhow::anyhow;
 use std::{env::home_dir, fs, path::PathBuf};
@@ -16,7 +17,7 @@ pub fn set_perm_over_file(path: &PathBuf) -> anyhow::Result<()> {
 
 pub fn _init_() -> anyhow::Result<()> {
     let home_dir = home_dirr()?;
-    fs::create_dir_all(home_dir.join("diamond").to_string_lossy().to_string())?;
+    fs::create_dir_all(home_dir.join("diamond"))?;
 
     if fs::File::open(home_dirr()?.join("diamond/gem.toml"))
         .is_err_and(|e| e.kind() == std::io::ErrorKind::NotFound)
@@ -24,6 +25,14 @@ pub fn _init_() -> anyhow::Result<()> {
         toml::toml_init()?;
     }
 
+    if fs::File::open(home_dirr()?.join("diamond/gem.json"))
+        .is_err_and(|e| e.kind() == std::io::ErrorKind::NotFound)
+    {
+        let json_init = serde_json::to_string_pretty::<Vec<Fields>>(&vec![])?;
+        let main_vault: PathBuf = toml()?.dependencies.main_vault_path.into();
+
+        fs::write(main_vault.join("gem.json"), json_init)?;
+    }
     Ok(())
 }
 
@@ -41,16 +50,18 @@ pub fn print_mini_logo() {
     use colored::Colorize;
     println!(
         "{}",
-        r#"
-       ╱╲
-      ╱  ╲    D I A M O N D
-     ╱ ╱╲ ╲   
-    ╱ ╱  ╲ ╲  Secure Vault
-    ╲ ╲  ╱ ╱
-     ╲ ╲╱ ╱
-      ╲  ╱
-       ╲╱
-    "#
-        .bright_cyan()
+        r#"      __________________
+    .-'  \ _.-''-._ /  '-.
+  .-/\   .'.      .'.   /\-.
+ _'/  \.'   '.  .'   './  \'_
+:======:======::======:======:  
+ '. '.  \     ''     /  .' .'
+   '. .  \   :  :   /  . .'
+     '.'  \  '  '  /  '.'
+       ':  \:    :/  :'
+         '. \    / .'
+           '.\  /.'    Safe Place For Your Information
+             '\/'"#
+        .bright_cyan().bold()
     );
 }

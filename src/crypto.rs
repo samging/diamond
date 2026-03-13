@@ -40,8 +40,15 @@ pub fn read_json(ef: Option<&str>) -> anyhow::Result<Vec<Fields>> {
     let main_vault_path: PathBuf = toml()?.dependencies.main_vault_path.into();
 
     let mut o = if let Some(ef) = ef {
-        let o = fs::File::open(home_dirr()?.join(ef))?;
-        o
+        let o = fs::File::open(home_dirr()?.join(ef));
+
+        if o.as_ref()
+            .is_err_and(|s| s.kind() == std::io::ErrorKind::NotFound)
+        {
+            return Ok(vec![]);
+        }
+
+        o?
     } else {
         let o = fs::File::open(
             main_vault_path

@@ -61,7 +61,10 @@ fn interface() -> anyhow::Result<()> {
 
         "help" => help_helper(&data, 1).pe()?,
 
-        "list" => list(None).pe()?,
+        "list" => {
+            let ef = data_token.get(1).map(|s| s.as_str());
+            list(ef).pe()?;
+        }
         "remove" => {
             remove_helper(1, &data, &data_token)?;
         }

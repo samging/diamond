@@ -172,7 +172,7 @@ pub mod safe {
         }
     }
 
-    pub fn id_does_not_exsist(
+    pub fn id_does_not_existe(
         id: &str,
         token: usize,
         data: &Vec<String>,

@@ -11,6 +11,7 @@ A secure, REPL based password manager built in Rust with military-grade encrypti
 - **Unix file permissions** (0600) for secure storage
 - **External file support** for multiple vaults
 - **Interactive REPL interface** with rustyline
+- **hidden master-key input system** with rpassword
 
 ## Security
 
@@ -45,38 +46,58 @@ Launch the REPL:
 
 #### Add a password
 ```
-add <username/email> <password> <id> <master-key> <<Option: note>> 
+add <username/email> <password> <id> <<Option: note> <<Option: external path>> 
 ```
 
 Example:
 ```
 add user@example.com MyP@ssw0rd github MyMasterKey123456
 add user@example.com MyP@ssw0rd github MyMasterKey123456 <note>
+add user@example.com MyP@ssw0rd github MyMasterKey123456 <note> <path>
+add user@example.com MyP@ssw0rd github MyMasterKey123456 <> <path>
 ```
 
 #### Get a password
 ```
-get <id> <master-key> 
+get <id> <<Option: external path>>
 ```
 
 Example:
 ```
-get github MyMasterKey123456
+get github <any.json>
 ```
 
 #### List all entries
 ```
-list 
+list <<Option: external path>>
+```
+
+Example:
+```
+list <any.json>
+list
 ```
 
 #### Search for an entry
 ```
-search <id> 
+search <id> <<<Option: external path>>> 
+```
+
+Example:
+```
+search instagram <any.json>
+search instagram
 ```
 
 #### Remove an entry
 ```
-remove <id> <master-key>
+remove <id> <<<Option: external path>>>
+```
+
+Example:
+```
+remove instagram
+remove instagram <any.json>
 ```
 
 #### Generate a password
@@ -100,27 +121,35 @@ exit
 clear
 ```
 
-### External Vaults
-
-Use external files for separate password vaults:
-
+#### Export && Import
+Export a vault:
 ```
-external <path/file> <command> [arguments...]
+export <the name of the export> <<<Option: external path>>>
+```
+Example:
+```
+export any.json
+export <any.json> <idk.json>
+```
+
+Import a vault:
+```
+import <the name/path of the vault you want to import> <new name>
 ```
 
 Example:
 ```
-external work.json add user@work.com P@ss123 slack MyKey123456
-external work.json get slack MyKey123456 
-external work.json list
+import <any.json> <new-any.json>
 ```
+
+**Keep in mind** in order to import you'll need the **master-key** you used in export 
 
 ## Password Requirements
 
 - **Master Key**: Minimum 16 characters, must pass strength validation
-- **Regular Passwords**: Strength validated against username/email context
+- **Master-Key Strength**: Strength validated against username/email context
 
-Passwords are rated as: Very Weak, Weak, Fair, Good, or Strong. diamond rejects Very Weak and Weak and Fair passwords.
+Master-Key are rated as: Very Weak, Weak, Fair, Good, or Strong. diamond rejects Very Weak and Weak and Fair Master-key.
 
 ## File Storage
 
@@ -146,19 +175,12 @@ Each entry stores:
 ```bash
 cargo build --release
 ```
-
-### Run tests
-
-```bash
-cargo test
-```
-
 ## Security Considerations
 
 ⚠️ **Important**:
 
 - Never share your master key
-- The master key encrypts/decrypts your passwords
+- The master key encrypts/decrypts your vault and every thing else
 - Loss of master-key means permanent data loss
 - Store vault backups securely
 
