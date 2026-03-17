@@ -11,7 +11,7 @@ pub fn set_perm_over_file(path: &PathBuf) -> anyhow::Result<()> {
     let mut perm = file.metadata()?.permissions();
     perm.set_mode(0o600);
 
-    fs::set_permissions(&path, perm)?;
+    fs::set_permissions(path, perm)?;
     Ok(())
 }
 
@@ -54,7 +54,7 @@ pub fn print_mini_logo() {
     .-'  \ _.-''-._ /  '-.
   .-/\   .'.      .'.   /\-.
  _'/  \.'   '.  .'   './  \'_
-:======:======::======:======:  
+:======:======::======:======:
  '. '.  \     ''     /  .' .'
    '. .  \   :  :   /  . .'
      '.'  \  '  '  /  '.'
@@ -62,6 +62,7 @@ pub fn print_mini_logo() {
          '. \    / .'
            '.\  /.'    Safe Place For Your Information
              '\/'"#
-        .bright_cyan().bold()
+            .bright_cyan()
+            .bold()
     );
 }

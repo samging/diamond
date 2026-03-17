@@ -15,7 +15,7 @@ use colored::Colorize;
 pub fn add_helper(
     mut index: usize,
     data: &Vec<String>,
-    data_token: &Vec<String>,
+    data_token: &[String],
 ) -> anyhow::Result<()> {
     let username_email = data
         .get_token(&index)
@@ -41,12 +41,12 @@ pub fn add_helper(
         .pe();
 
     let master_key =
-        master_key.check_password_strength(&"Master-key", &username_4_check_password_strengrh);
+        master_key.check_password_strength("Master-key", &username_4_check_password_strengrh);
 
     if let (Ok(us), Ok(p), Ok(u), Ok(m)) = (username_email, password, &id, master_key) {
         let u = &u.to_string().check_existing_ids(u, ef).pe();
         if let Ok(u) = u {
-            add(&us.to_string(), &u, &p, &m, note, ef).pe()?;
+            add(us, u, p, &m, note, ef).pe()?;
         }
     }
     Ok(())
@@ -55,7 +55,7 @@ pub fn add_helper(
 pub fn get_helper(
     mut index: usize,
     data: &Vec<String>,
-    data_token: &Vec<String>,
+    data_token: &[String],
 ) -> anyhow::Result<()> {
     let id = data.get_token(&index).checker("id".to_string()).pe();
 
@@ -69,11 +69,9 @@ pub fn get_helper(
     let ef = data_token.get(index).map(|s| s.as_str());
 
     id_does_not_existe(
-        &id.as_ref()
-            .map_err(|_| anyhow!("moving id error!"))?
-            .to_string(),
+        id.as_ref().map_err(|_| anyhow!("moving id error!"))?,
         1,
-        &data,
+        data,
         ef,
     )
     .pe()?;
@@ -87,7 +85,7 @@ pub fn get_helper(
 pub fn remove_helper(
     mut index: usize,
     data: &Vec<String>,
-    data_token: &Vec<String>,
+    data_token: &[String],
 ) -> anyhow::Result<()> {
     let id = data.get_token(&index).checker("id".to_string()).pe();
 
@@ -101,11 +99,9 @@ pub fn remove_helper(
     let ef = data_token.get(index).map(|s| s.as_str());
 
     id_does_not_existe(
-        &id.as_ref()
-            .map_err(|_| anyhow!("moving id error!"))?
-            .to_string(),
+        id.as_ref().map_err(|_| anyhow!("moving id error!"))?,
         1,
-        &data,
+        data,
         ef,
     )
     .pe()?;
@@ -120,24 +116,22 @@ pub fn remove_helper(
 pub fn search_helper(
     mut index: usize,
     data: &Vec<String>,
-    data_token: &Vec<String>,
+    data_token: &[String],
 ) -> anyhow::Result<()> {
     let id = data.get_token(&index).checker("id".to_string()).pe();
     index += 1;
     let ef = data_token.get(index).map(|s| s.as_str());
 
     id_does_not_existe(
-        &id.as_ref()
-            .map_err(|_| anyhow!("moving id error!"))?
-            .to_string(),
+        id.as_ref().map_err(|_| anyhow!("moving id error!"))?,
         1,
-        &data,
+        data,
         ef,
     )
     .pe()?;
 
     if let Ok(o) = id {
-        search(&o, ef).pe()?
+        search(o, ef).pe()?
     }
 
     Ok(())
@@ -146,7 +140,7 @@ pub fn search_helper(
 pub fn export_helper(
     data: &Vec<String>,
     mut index: usize,
-    data_token: &Vec<String>,
+    data_token: &[String],
 ) -> anyhow::Result<()> {
     let name_of_export = data
         .get_token(&index)
@@ -158,7 +152,7 @@ pub fn export_helper(
         .to_string()
         .master_key_checker()
         .pe()
-        .check_password_strength(&"Master-Key", "");
+        .check_password_strength("Master-Key", "");
 
     index += 1;
     let ef = data_token.get(index).map(|s| s.as_str());
@@ -180,7 +174,7 @@ pub fn import_helper(data: &Vec<String>, mut index: usize) -> anyhow::Result<()>
         .to_string()
         .master_key_checker()
         .pe()
-        .check_password_strength(&"Master-key", "")
+        .check_password_strength("Master-key", "")
         .pe();
 
     index += 1;
@@ -192,8 +186,8 @@ pub fn import_helper(data: &Vec<String>, mut index: usize) -> anyhow::Result<()>
     if let (Ok(name), Ok(mk), Ok(pov)) = (new_name, master_key, path_of_exported_vault) {
         import(&mk, name, pov).pe()?;
     }
-    
-    println!(">>{}" , "import is done!".bright_cyan().bold());
+
+    println!(">>{}", "import is done!".bright_cyan().bold());
     Ok(())
 }
 

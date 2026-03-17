@@ -37,7 +37,7 @@ pub fn toml_init() -> anyhow::Result<()> {
     let main_vault_path = home_dirr()?.join("diamond").to_string_lossy().to_string();
 
     let def_toml = Toml {
-        customization: Customization { username: username },
+        customization: Customization { username },
         dependencies: Dependencies { main_vault_path },
     };
 

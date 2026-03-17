@@ -34,7 +34,7 @@ pub fn add(
 
     let main_vault_path: PathBuf = toml()?.dependencies.main_vault_path.into();
 
-    let enc = enc(&master_key, &username_email.to_string(), &password)?;
+    let enc = enc(&master_key, username_email, &password)?;
     let (salt, nonce, data) = (
         BASE64_STANDARD.encode(enc.0),
         BASE64_STANDARD.encode(enc.1),
@@ -81,7 +81,7 @@ pub fn add(
 pub fn get(id: &str, master_key: &str, ef: Option<&str>) -> anyhow::Result<()> {
     let master_key = Zeroizing::new(master_key.to_string());
 
-    let dec = dec(&master_key, &id.to_string(), ef)?;
+    let dec = dec(&master_key, id, ef)?;
     let dec = String::from_utf8(dec)?;
     let decc: Vec<String> = dec.split('|').map(|s| s.to_string()).collect();
 
@@ -214,7 +214,7 @@ pub fn export(ef: Option<&str>, name_of_export: &str, master_key: &str) -> anyho
         fs::File::open(main_vault_path.join("gem.json"))?.read_to_string(&mut vault)?;
     };
 
-    let (salt, nonce, data) = enc_vault(&*master_key, vault)?;
+    let (salt, nonce, data) = enc_vault(&master_key, vault)?;
     let (encoded_salt, encoded_nonce, encoded_vault) = (
         BASE64_STANDARD.encode(salt),
         BASE64_STANDARD.encode(nonce),
@@ -236,7 +236,7 @@ pub fn export(ef: Option<&str>, name_of_export: &str, master_key: &str) -> anyho
 
 pub fn import(master_key: &str, new_name: &str, path_of_vault: &str) -> anyhow::Result<()> {
     let master_key = Zeroizing::new(master_key.to_string());
-    let dec: String = String::from_utf8(dec_vault(&*master_key.as_str(), path_of_vault)?)?;
+    let dec: String = String::from_utf8(dec_vault(master_key.as_str(), path_of_vault)?)?;
     let json_args = serde_json::from_str::<Vec<Fields>>(dec.trim())?;
     let json = serde_json::to_string_pretty(&json_args)?;
     atomic_writer(&home_dirr()?.join(new_name), &json)?;
@@ -245,7 +245,7 @@ pub fn import(master_key: &str, new_name: &str, path_of_vault: &str) -> anyhow::
     Ok(())
 }
 
-fn atomic_writer (path:&PathBuf , content:&str) -> anyhow::Result<()> {
+fn atomic_writer(path: &PathBuf, content: &str) -> anyhow::Result<()> {
     let tmp = path.with_extension("tmp");
     fs::write(&tmp, content)?;
     fs::rename(&tmp, path)?;

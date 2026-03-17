@@ -33,10 +33,8 @@ pub mod safe {
         type Out = anyhow::Result<T>;
         fn checker(self, res: String) -> Self::Out {
             match self {
-                Ok(o) => return Ok(o),
-                Err(_) => {
-                    return Err(anyhow!("missing value [{}]", res));
-                }
+                Ok(o) => Ok(o),
+                Err(_) => Err(anyhow!("missing value [{}]", res)),
             }
         }
     }
@@ -46,9 +44,9 @@ pub mod safe {
 
         fn master_key_checker(self) -> Self::Out {
             if self.len() >= 16 {
-                return Ok(self);
+                Ok(self)
             } else {
-                return Err(anyhow!("The master key must be 16 characters at least "));
+                Err(anyhow!("The master key must be 16 characters at least "))
             }
         }
     }
@@ -60,12 +58,12 @@ pub mod safe {
             let read_json = read_json(ef)?;
 
             if let Some(o) = read_json.iter().find(|s| s.entry.id == id) {
-                return Err(anyhow!(
+                Err(anyhow!(
                     "the id does already exist try another one or add special symbols beside it ! <{}>",
                     o.entry.id.to_string().bright_yellow().bold()
-                ));
+                ))
             } else {
-                return Ok(self);
+                Ok(self)
             }
         }
     }
@@ -168,7 +166,7 @@ pub mod safe {
                 return Err(anyhow!("{}", sc));
             }
             println!(">>{}", sc);
-            return Ok(sself);
+            Ok(sself)
         }
     }
 
@@ -180,7 +178,7 @@ pub mod safe {
     ) -> anyhow::Result<()> {
         if id
             .to_string()
-            .check_existing_ids(&*data.get_token(&token)?, ef)
+            .check_existing_ids(data.get_token(&token)?, ef)
             .is_ok()
         {
             return Err(anyhow!("The id does not exist!"));
@@ -194,7 +192,7 @@ pub mod parser {
 
     pub fn parse_input(data: String) -> anyhow::Result<Vec<String>> {
         let data: Vec<String> = data.split_whitespace().map(|s| s.to_string()).collect();
-        return Ok(data);
+        Ok(data)
     }
 
     pub fn parse_input_by_token(data: String) -> anyhow::Result<Vec<String>> {
@@ -212,14 +210,14 @@ pub mod parser {
                     content_in.clear();
                 }
                 '>' => {
-                    if _in_ == true {
+                    if _in_ {
                         vec.push(content_in.trim().to_string());
                         content_in.clear();
                         _in_ = false;
                     }
                 }
                 _ => {
-                    if _in_ == true {
+                    if _in_ {
                         content_in.push(i);
                     } else if i.is_whitespace() {
                         if !content_in.trim().is_empty() {
@@ -246,9 +244,9 @@ pub mod parser {
             }
 
             if let Some(d) = self.get(*index) {
-                return Ok(d.as_str());
+                Ok(d.as_str())
             } else {
-                return Err(anyhow!("Couldn't get data from the parser!"));
+                Err(anyhow!("Couldn't get data from the parser!"))
             }
         }
     }
@@ -257,9 +255,9 @@ pub mod parser {
 pub mod cleaner {
     pub fn extract_string_value_from_result(value: &anyhow::Result<&str>) -> String {
         if let Ok(o) = value {
-            return o.to_string();
+            o.to_string()
         } else {
-            return String::new();
+            String::new()
         }
     }
 }

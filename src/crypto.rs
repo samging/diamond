@@ -50,21 +50,21 @@ pub fn read_json(ef: Option<&str>) -> anyhow::Result<Vec<Fields>> {
 
         o?
     } else {
-        let o = fs::File::open(
+        
+        fs::File::open(
             main_vault_path
                 .join("gem.json")
                 .to_string_lossy()
                 .to_string(),
-        )?;
-        o
+        )?
     };
 
     o.read_to_string(&mut s)?;
 
-    if let Ok(vec) = serde_json::from_str::<Vec<Fields>>(&s.trim()) {
-        return Ok(vec);
+    if let Ok(vec) = serde_json::from_str::<Vec<Fields>>(s.trim()) {
+        Ok(vec)
     } else {
-        return Err(anyhow!("Couldn't read json file"));
+        Err(anyhow!("Couldn't read json file"))
     }
 }
 
@@ -83,10 +83,10 @@ pub fn enc(
         .map_err(|_| anyhow!("Couldn't hash master key"))?;
 
     let key = Key::<Aes256Gcm>::from_slice(&*out_master);
-    let cip = Aes256Gcm::new(&key);
+    let cip = Aes256Gcm::new(key);
     let nonce = Aes256Gcm::generate_nonce(&mut OsRng);
 
-    let format = Zeroizing::new(format!("{}|{}", username_email, password.to_string()));
+    let format = Zeroizing::new(format!("{}|{}", username_email, password));
 
     let enc = cip
         .encrypt(&nonce, format.as_bytes())
@@ -118,7 +118,7 @@ pub fn dec(master_key: &str, id: &str, ef: Option<&str>) -> anyhow::Result<Vec<u
         .map_err(|_| anyhow!("Couldn't hash master key"))?;
 
     let key = Key::<Aes256Gcm>::from_slice(&*out_pass);
-    let cip = Aes256Gcm::new(&key);
+    let cip = Aes256Gcm::new(key);
     let nonce = Nonce::from_slice(&nonce);
 
     let dec = cip
@@ -142,7 +142,7 @@ pub fn enc_vault(
         .map_err(|_| anyhow!("Couldn't hash master key"))?;
 
     let key = Key::<Aes256Gcm>::from_slice(&*out_master);
-    let cip = Aes256Gcm::new(&key);
+    let cip = Aes256Gcm::new(key);
     let nonce = Aes256Gcm::generate_nonce(&mut OsRng);
 
     let enc = cip
@@ -158,31 +158,31 @@ fn read_json_import(ef: Option<&str>, name_of_vault: &str) -> anyhow::Result<Vec
     let main_vault_path: PathBuf = toml()?.dependencies.main_vault_path.into();
 
     let mut o = if let Some(ef) = ef {
-        let o = fs::File::open(home_dirr()?.join(ef))?;
-        o
+        
+        fs::File::open(home_dirr()?.join(ef))?
     } else {
-        let o = fs::File::open(
+        
+        fs::File::open(
             main_vault_path
                 .join(name_of_vault)
                 .to_string_lossy()
                 .to_string(),
-        )?;
-        o
+        )?
     };
 
     o.read_to_string(&mut s)?;
 
-    if let Ok(vec) = serde_json::from_str::<VaultExport>(&s.trim()) {
-        return Ok(vec![vec]);
+    if let Ok(vec) = serde_json::from_str::<VaultExport>(s.trim()) {
+        Ok(vec![vec])
     } else {
-        return Err(anyhow!("Couldn't read json file"));
+        Err(anyhow!("Couldn't read json file"))
     }
 }
 
 pub fn dec_vault(master_key: &str, path_of_vault: &str) -> anyhow::Result<Vec<u8>> {
     let read_json = read_json_import(Some(path_of_vault), path_of_vault)?;
 
-    for i in read_json {
+    if let Some(i) = read_json.into_iter().next() {
         let salt = i.salt;
         let nonce = i.nonce;
         let vault = i.vault;
@@ -199,10 +199,10 @@ pub fn dec_vault(master_key: &str, path_of_vault: &str) -> anyhow::Result<Vec<u8
             .map_err(|e| anyhow!("Couldn't hash the master-key <{e}>"))?;
 
         let key = Key::<Aes256Gcm>::from_slice(&*out_master);
-        let cip = Aes256Gcm::new(&key);
+        let cip = Aes256Gcm::new(key);
         let nonce = Nonce::from_slice(&nonce_decoded);
 
-        let dec = cip.decrypt(&nonce, &*vault_decoded).map_err(|e| {
+        let dec = cip.decrypt(nonce, &*vault_decoded).map_err(|e| {
             anyhow!("Couldn't dec data | try again with the correct master-key! <{e}>")
         })?;
 
