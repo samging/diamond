@@ -33,6 +33,37 @@ fn main() -> anyhow::Result<()> {
     }
 }
 
+pub enum Commands {
+    Add,
+    Get,
+    List,
+    Remove,
+    Search,
+    Export,
+    Exit,
+    Clear,
+    Gp,
+    Import,
+    Help,
+}
+
+pub fn commandsmatch(command: &str) -> Option<Commands> {
+    match command {
+        "add" => Some(Commands::Add),
+        "get" => Some(Commands::Get),
+        "list" => Some(Commands::List),
+        "remove" => Some(Commands::Remove),
+        "search" => Some(Commands::Search),
+        "export" => Some(Commands::Export),
+        "exit" => Some(Commands::Exit),
+        "clear" => Some(Commands::Clear),
+        "gp" => Some(Commands::Gp),
+        "import" => Some(Commands::Import),
+        "help" => Some(Commands::Help),
+        _ => None,
+    }
+}
+
 fn interface() -> anyhow::Result<()> {
     let mut rl = DefaultEditor::new()?;
 
@@ -51,33 +82,33 @@ fn interface() -> anyhow::Result<()> {
     let data = parse_input(input.trim().to_string())?;
     let data_token = parse_input_by_token(input.trim().to_string())?;
 
-    match data.get_token(&0)?.trim() {
-        "add" => {
+    match commandsmatch(data.get_token(&0)?.trim()) {
+        Some(Commands::Add) => {
             add_helper(1, &data, &data_token)?;
         }
-        "get" => {
+        Some(Commands::Get) => {
             get_helper(1, &data, &data_token)?;
         }
 
-        "help" => help_helper(&data, 1).pe()?,
+        Some(Commands::Help) => help_helper(&data, 1).pe()?,
 
-        "list" => {
+        Some(Commands::List) => {
             let ef = data_token.get(1).map(|s| s.as_str());
             list(ef).pe()?;
         }
-        "remove" => {
+        Some(Commands::Remove) => {
             remove_helper(1, &data, &data_token)?;
         }
-        "search" => {
+        Some(Commands::Search) => {
             search_helper(1, &data, &data_token)?;
         }
-        "export" => {
+        Some(Commands::Export) => {
             export_helper(&data, 1, &data_token).pe()?;
         }
-        "exit" => {
+        Some(Commands::Exit) => {
             std::process::exit(0);
         }
-        "clear" => {
+        Some(Commands::Clear) => {
             #[cfg(unix)]
             {
                 std::process::Command::new("clear").status()?;
@@ -89,13 +120,13 @@ fn interface() -> anyhow::Result<()> {
                     .status()?;
             }
         }
-        "gp" => {
+        Some(Commands::Gp) => {
             generate_password().pe()?;
         }
-        "import" => {
+        Some(Commands::Import) => {
             import_helper(&data, 1).pe()?;
         }
-        _ => {
+        None => {
             if !data.get_token(&0)?.is_empty() {
                 println!(
                     ">> The command [{}] you used is not vaild command please use [{} -l] to check all the available commands",

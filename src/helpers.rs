@@ -34,19 +34,20 @@ pub fn add_helper(
 
     let username_4_check_password_strengrh = extract_string_value_from_result(&username_email);
 
-    let master_key = helper_master_key()
-        .checker("Master-key".to_string())?
-        .to_string()
-        .master_key_checker()
-        .pe();
+    if let (Ok(us), Ok(p), Ok(u)) = (username_email, password, &id) {
+        let master_key = helper_master_key()
+            .checker("Master-key".to_string())?
+            .to_string()
+            .master_key_checker()
+            .pe();
 
-    let master_key =
-        master_key.check_password_strength("Master-key", &username_4_check_password_strengrh);
-
-    if let (Ok(us), Ok(p), Ok(u), Ok(m)) = (username_email, password, &id, master_key) {
-        let u = &u.to_string().check_existing_ids(u, ef).pe();
-        if let Ok(u) = u {
-            add(us, u, p, &m, note, ef).pe()?;
+        let master_key =
+            master_key.check_password_strength("Master-key", &username_4_check_password_strengrh);
+        if let Ok(m) = master_key {
+            let u = &u.to_string().check_existing_ids(u, ef).pe();
+            if let Ok(u) = u {
+                add(us, u, p, &m, note, ef).pe()?;
+            }
         }
     }
     Ok(())
@@ -59,12 +60,6 @@ pub fn get_helper(
 ) -> anyhow::Result<()> {
     let id = data.get_token(&index).checker("id".to_string()).pe();
 
-    let master_key = helper_master_key()
-        .checker("Master-Key".to_string())?
-        .to_string()
-        .master_key_checker()
-        .pe();
-
     index += 1;
     let ef = data_token.get(index).map(|s| s.as_str());
 
@@ -76,8 +71,16 @@ pub fn get_helper(
     )
     .pe()?;
 
-    if let (Ok(o), Ok(p)) = (id, master_key) {
-        get(o, &p, ef).pe()?
+    if let Ok(o) = id {
+        let master_key = helper_master_key()
+            .checker("Master-Key".to_string())?
+            .to_string()
+            .master_key_checker()
+            .pe();
+
+        if let Ok(p) = master_key {
+            get(o, &p, ef).pe()?
+        }
     }
     Ok(())
 }
@@ -89,12 +92,6 @@ pub fn remove_helper(
 ) -> anyhow::Result<()> {
     let id = data.get_token(&index).checker("id".to_string()).pe();
 
-    let master_key = helper_master_key()
-        .checker("Master-Key".to_string())?
-        .to_string()
-        .master_key_checker()
-        .pe();
-
     index += 1;
     let ef = data_token.get(index).map(|s| s.as_str());
 
@@ -106,8 +103,16 @@ pub fn remove_helper(
     )
     .pe()?;
 
-    if let (Ok(o), Ok(master)) = (id, master_key) {
-        remove(o, ef, &master).pe()?;
+    if let Ok(o) = id {
+        let master_key = helper_master_key()
+            .checker("Master-Key".to_string())?
+            .to_string()
+            .master_key_checker()
+            .pe();
+
+        if let Ok(master) = master_key {
+            remove(o, ef, &master).pe()?;
+        }
     }
 
     Ok(())
@@ -147,18 +152,20 @@ pub fn export_helper(
         .checker("name of export".to_string())
         .pe();
 
-    let master_key = helper_master_key()
-        .checker("Master-Key".to_string())?
-        .to_string()
-        .master_key_checker()
-        .pe()
-        .check_password_strength("Master-Key", "");
-
     index += 1;
     let ef = data_token.get(index).map(|s| s.as_str());
 
-    if let (Ok(name), Ok(master)) = (name_of_export, master_key) {
-        export(ef, name, &master).pe()?;
+    if let Ok(name) = name_of_export {
+        let master_key = helper_master_key()
+            .checker("Master-Key".to_string())?
+            .to_string()
+            .master_key_checker()
+            .pe()
+            .check_password_strength("Master-Key", "");
+
+        if let Ok(master) = master_key {
+            export(ef, name, &master).pe()?;
+        }
     }
     Ok(())
 }
@@ -169,22 +176,24 @@ pub fn import_helper(data: &Vec<String>, mut index: usize) -> anyhow::Result<()>
         .checker("the name of the vault".to_string())
         .pe();
 
-    let master_key = helper_master_key()
-        .checker("Master-Key".to_string())?
-        .to_string()
-        .master_key_checker()
-        .pe()
-        .check_password_strength("Master-key", "")
-        .pe();
-
     index += 1;
     let new_name = data
         .get_token(&index)
         .checker("the path of the vault".to_string())
         .pe();
 
-    if let (Ok(name), Ok(mk), Ok(pov)) = (new_name, master_key, path_of_exported_vault) {
-        import(&mk, name, pov).pe()?;
+    if let (Ok(name), Ok(pov)) = (new_name, path_of_exported_vault) {
+        let master_key = helper_master_key()
+            .checker("Master-Key".to_string())?
+            .to_string()
+            .master_key_checker()
+            .pe()
+            .check_password_strength("Master-key", "")
+            .pe();
+
+        if let Ok(mk) = master_key {
+            import(&mk, name, pov).pe()?;
+        }
     }
 
     println!(">>{}", "import is done!".bright_cyan().bold());
