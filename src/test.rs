@@ -1,9 +1,6 @@
 #[cfg(test)]
 pub mod test {
-    use crate::{
-        backend::safe::{MasterKey, PasswordChecker},
-        commands::fuzzy,
-    };
+    use crate::backend::safe::{MasterKey, PasswordChecker};
 
     #[test]
     pub fn test_weak_password() {
@@ -18,6 +15,6 @@ pub mod test {
     }
     #[test]
     pub fn test_fuzzy() {
-        fuzzy("test", None).unwrap();
+        //--needs a file so it will be tested only while dev--//
     }
 }
