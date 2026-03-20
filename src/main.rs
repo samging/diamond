@@ -106,7 +106,7 @@ fn interface() -> anyhow::Result<()> {
     let input = match rl.readline(&format) {
         Ok(o) => o,
         Err(e) => match e {
-            ReadlineError::Eof => Err(anyhow!("Eof/ Ctrl+C"))?,
+            ReadlineError::Eof | ReadlineError::Interrupted => std::process::exit(0),
             _ => Err(anyhow!("{e}"))?,
         },
     };
