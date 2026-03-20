@@ -139,8 +139,8 @@ pub fn dec(master_key: &str, id: &str, ef: Option<&str>) -> anyhow::Result<(Vec<
 pub fn enc_vault(
     master_key: &str,
     _vault_: String,
-) -> anyhow::Result<([u8; 16], [u8; 12], Vec<u8>)> {
-    let mut salt = [0u8; 16];
+) -> anyhow::Result<([u8; 32], [u8; 12], Vec<u8>)> {
+    let mut salt = [0u8; 32];
     OsRng.fill_bytes(&mut salt);
     let argon2 = Argon2::default();
     let mut out_master = Zeroizing::new([0u8; 32]);

@@ -208,7 +208,7 @@ pub fn help_helper_() -> anyhow::Result<()> {
     println!(
         ">> [{}] --[{}]",
         "help".bright_purple().bold(),
-        "add/get/remove/search/clear/exit/list/update/rename/note"
+        "add/get/remove/search/clear/exit/list/update/rename/note/fuzzy"
             .bright_yellow()
             .bold()
     );
@@ -248,8 +248,9 @@ pub fn help_helper_() -> anyhow::Result<()> {
         "rename".bright_purple().bold(),
     );
     println!(
-        ">> <{}: used to change a note or add it>",
+        ">> <{}: used to change a note or add it / <{}: used to make fuzzy search to grap any match using a keyword>",
         "note".bright_purple().bold(),
+        "fuzzy".bright_purple().bold(),
     );
     Ok(())
 }
@@ -379,16 +380,28 @@ pub fn help_helper(data: &Vec<String>, index: usize) -> anyhow::Result<()> {
                 "Option: external path".bright_yellow().bold(),
             );
         }
+        "--fuzzy" => {
+            println!(
+                ">>{}: [{}] [{}] [{}] [<{}>]",
+                "Usage".bright_green().bold(),
+                "diamond".bright_blue().bold(),
+                "fuzzy".bright_yellow().bold(),
+                "keyword".bright_yellow().bold(),
+                "Option: external path".bright_yellow().bold(),
+            )
+        }
         "-l" => {
             help_helper_()?;
         }
         _ => {
-            if !data.get_token(&1)?.is_empty() {
+            if !data.get_token(&index)?.is_empty() {
                 println!(
                     ">> The flag [{}] you used is not vaild flag please use [{} -l] to check all the available flags",
-                    data.get_token(&1)?.bright_red().bold(),
+                    data.get_token(&index)?.bright_red().bold(),
                     "help".bright_yellow().bold()
                 )
+            } else {
+                help_helper_()?;
             }
         }
     }

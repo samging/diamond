@@ -1,5 +1,7 @@
 mod backend;
 mod crypto;
+use std::collections::HashMap;
+
 use anyhow::anyhow;
 use colored::Colorize;
 mod commands;
@@ -51,25 +53,47 @@ pub enum Commands {
     Fuzzy,
 }
 
-pub fn commandsmatch(command: &str) -> Option<Commands> {
-    match command {
-        "add" => Some(Commands::Add),
-        "get" => Some(Commands::Get),
-        "list" => Some(Commands::List),
-        "remove" => Some(Commands::Remove),
-        "search" => Some(Commands::Search),
-        "export" => Some(Commands::Export),
-        "exit" => Some(Commands::Exit),
-        "clear" => Some(Commands::Clear),
-        "gp" => Some(Commands::Gp),
-        "import" => Some(Commands::Import),
-        "help" => Some(Commands::Help),
-        "rename" => Some(Commands::Rename),
-        "update" => Some(Commands::Update),
-        "note" => Some(Commands::Note),
-        "fuzzy" => Some(Commands::Fuzzy),
-        _ => None,
-    }
+pub fn commandsmatch() -> HashMap<String, Commands> {
+    let toml = toml()
+        .ok()
+        .and_then(|s| s.customization.allies)
+        .unwrap_or_default();
+
+    let mut hashmap = HashMap::new();
+    hashmap.insert(toml.add.unwrap_or("add".to_string()), Commands::Add);
+    hashmap.insert(toml.get.unwrap_or("get".to_string()), Commands::Get);
+    hashmap.insert(toml.list.unwrap_or("list".to_string()), Commands::List);
+    hashmap.insert(
+        toml.remove.unwrap_or("remove".to_string()),
+        Commands::Remove,
+    );
+    hashmap.insert(
+        toml.search.unwrap_or("search".to_string()),
+        Commands::Search,
+    );
+    hashmap.insert(
+        toml.export.unwrap_or("export".to_string()),
+        Commands::Export,
+    );
+    hashmap.insert(toml.exit.unwrap_or("exit".to_string()), Commands::Exit);
+    hashmap.insert(toml.clear.unwrap_or("clear".to_string()), Commands::Clear);
+    hashmap.insert(
+        toml.import.unwrap_or("import".to_string()),
+        Commands::Import,
+    );
+    hashmap.insert(toml.help.unwrap_or("help".to_string()), Commands::Help);
+    hashmap.insert(
+        toml.rename.unwrap_or("rename".to_string()),
+        Commands::Rename,
+    );
+    hashmap.insert(
+        toml.update.unwrap_or("update".to_string()),
+        Commands::Update,
+    );
+
+    hashmap.insert(toml.note.unwrap_or("note".to_string()), Commands::Note);
+    hashmap.insert(toml.fuzzy.unwrap_or("fuzzy".to_string()), Commands::Fuzzy);
+    hashmap
 }
 
 fn interface() -> anyhow::Result<()> {
@@ -90,7 +114,7 @@ fn interface() -> anyhow::Result<()> {
     let data = parse_input(input.trim().to_string())?;
     let data_token = parse_input_by_token(input.trim().to_string())?;
 
-    match commandsmatch(data.get_token(&0)?.trim()) {
+    match commandsmatch().get(&data.get_token(&0)?.to_string()) {
         Some(Commands::Add) => {
             add_helper(1, &data, &data_token)?;
         }

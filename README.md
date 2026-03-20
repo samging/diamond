@@ -175,6 +175,15 @@ Example:
 note <id-any> <<this is a new note>>
 note <id-any> <<"">> <<any.json>>
 ```
+#### Fuzzy
+```
+fuzzy <keyword> <<Option: external path>>
+```
+Example:
+```
+fuzzy test
+fuzzy test <any.json>
+```
 ## Password Requirements
 
 - **Master Key**: Minimum 16 characters, must pass strength validation

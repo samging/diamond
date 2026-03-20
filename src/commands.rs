@@ -10,7 +10,7 @@ use std::{
 use zeroize::Zeroizing;
 
 use crate::{
-    backend::safe::{AnyHowErrHelper, FileChecker},
+    backend::safe::AnyHowErrHelper,
     crypto::{self, dec_vault, enc_vault},
     toml,
     vault::home_dirr,
@@ -337,7 +337,7 @@ pub fn note(id: &str, note: &str, ef: Option<&str>) -> anyhow::Result<()> {
     let main_valut: PathBuf = toml()?.dependencies.main_vault_path.into();
 
     if let Some(notee) = read_json.iter_mut().find(|s| s.entry.id == id) {
-        notee.entry.note = Some(note.to_string().check_existing_ids(id, ef).pe()?);
+        notee.entry.note = Some(note.to_string());
     }
 
     let json = serde_json::to_string_pretty(&read_json)?;
@@ -367,7 +367,8 @@ pub fn fuzzy(keyword: &str, ef: Option<&str>) -> anyhow::Result<()> {
 
         if i.entry.id.contains(keyword) {
             println!(
-                ">>Found >{}: {} | {}: {} | {}: {}<",
+                ">>{} >{}: {} | {}: {} | {}: {}<",
+                "Found".bright_blue().bold(),
                 "id".bright_yellow().bold(),
                 i.entry.id.bright_blue().bold(),
                 "note".bright_yellow().bold(),

@@ -198,7 +198,6 @@ pub mod safe {
 }
 
 pub mod parser {
-    use anyhow::{Ok, anyhow};
 
     pub fn parse_input(data: String) -> anyhow::Result<Vec<String>> {
         let data: Vec<String> = data.split_whitespace().map(|s| s.to_string()).collect();
@@ -256,7 +255,7 @@ pub mod parser {
             if let Some(d) = self.get(*index) {
                 Ok(d.as_str())
             } else {
-                Err(anyhow!("Couldn't get data from the parser!"))
+                return Ok("");
             }
         }
     }

@@ -4,23 +4,23 @@ use serde::{Deserialize, Serialize};
 
 use crate::vault::home_dirr;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Default)]
 pub struct Toml {
     pub customization: Customization,
     pub dependencies: Dependencies,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Default)]
 pub struct Customization {
     pub username: String,
     pub allies: Option<Allies>,
 }
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Default)]
 pub struct Dependencies {
     pub main_vault_path: String,
     pub toml_path: String,
 }
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Default)]
 pub struct Allies {
     pub add: Option<String>,
     pub get: Option<String>,
@@ -34,7 +34,7 @@ pub struct Allies {
     pub import: Option<String>,
     pub help: Option<String>,
     pub rename: Option<String>,
-    pub upadte: Option<String>,
+    pub update: Option<String>,
     pub note: Option<String>,
     pub fuzzy: Option<String>,
 }
