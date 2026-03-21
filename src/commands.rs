@@ -12,16 +12,16 @@ use std::{
 };
 use zeroize::Zeroizing;
 
+use crate::crypto::{Entry, Fields, dec, enc, read_json};
 use crate::{
     backend::safe::AnyHowErrHelper,
     crypto::{self, dec_vault, enc_vault},
     toml::toml,
     vault::home_dirr,
 };
-use crate::{
-    crypto::{Entry, Fields, dec, enc, read_json},
-    vault::set_perm_over_file,
-};
+
+#[cfg(unix)]
+use crate::vault::set_perm_over_file;
 
 pub fn add(
     username_email: &str,
