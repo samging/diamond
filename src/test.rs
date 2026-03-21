@@ -7,7 +7,7 @@ pub mod test {
         let res = "password12345678"
             .to_string()
             .master_key_checker()
-            .check_password_strength("master-key-test", "mohammedamarneh@gmail.com");
+            .check_password_strength("master-key-test", "");
         match res {
             Ok(o) => eprintln!("ok {o}"),
             Err(e) => eprintln!("err {e}"),
@@ -15,6 +15,10 @@ pub mod test {
     }
     #[test]
     pub fn test_fuzzy() {
+        //--needs a file so it will be tested only while dev--//
+    }
+    #[test]
+    pub fn test_sw() {
         //--needs a file so it will be tested only while dev--//
     }
 }

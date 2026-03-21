@@ -37,6 +37,7 @@ pub struct Allies {
     pub update: Option<String>,
     pub note: Option<String>,
     pub fuzzy: Option<String>,
+    pub switch_vault: Option<String>,
 }
 
 pub fn toml() -> anyhow::Result<Toml> {

@@ -1,4 +1,5 @@
 use anyhow::anyhow;
+use arboard::Clipboard;
 use base64::prelude::*;
 use colored::Colorize;
 use rand::RngExt;
@@ -6,13 +7,15 @@ use std::{
     fs,
     io::{Read, Write, stdin, stdout},
     path::PathBuf,
+    thread,
+    time::Duration,
 };
 use zeroize::Zeroizing;
 
 use crate::{
     backend::safe::AnyHowErrHelper,
     crypto::{self, dec_vault, enc_vault},
-    toml,
+    toml::toml,
     vault::home_dirr,
 };
 use crate::{
@@ -28,6 +31,13 @@ pub fn add(
     note: Option<&str>,
     ef: Option<&str>,
 ) -> anyhow::Result<()> {
+    let password = if password.contains("gp") {
+        let gp = generate_password()?;
+        gp
+    } else {
+        password.to_string()
+    };
+
     let password = Zeroizing::new(password.to_string());
     let master_key = Zeroizing::new(master_key.to_string());
     let mut file = read_json(ef).pe()?;
@@ -81,21 +91,52 @@ pub fn add(
     Ok(())
 }
 
-pub fn get(id: &str, master_key: &str, ef: Option<&str>) -> anyhow::Result<()> {
+pub fn get(
+    id: &str,
+    master_key: &str,
+    clipboard_or_without: bool,
+    ef: Option<&str>,
+) -> anyhow::Result<()> {
     let master_key = Zeroizing::new(master_key.to_string());
 
     let dec = dec(&master_key, id, ef)?;
     let username = String::from_utf8(dec.0)?;
     let password = String::from_utf8(dec.1)?;
 
-    println!(
-        ">>{}: got [{}] [{}] [{}]",
-        "diamond".bright_cyan().bold(),
-        id.to_string().white().bold(),
-        &username.bright_white().bold(),
-        &password.bright_white().bold()
-    );
+    if !clipboard_or_without {
+        let mut c = Clipboard::new()?;
+        c.set_text(&password)?;
+        println!(
+            ">>{}, {}",
+            "wait for the password to be saved in the clipboard"
+                .bright_blue()
+                .bold(),
+            "it will take 5s..".bright_purple().bold()
+        );
 
+        let mut sec = 5;
+
+        while sec > 0 {
+            println!("~{}", sec.to_string().bright_cyan().bold());
+            thread::sleep(Duration::from_secs(1));
+            sec -= 1;
+        }
+
+        println!(
+            ">>{}: got [{}] [{}]",
+            "diamond".bright_cyan().bold(),
+            id.to_string().white().bold(),
+            &username.bright_white().bold(),
+        );
+    } else {
+        println!(
+            ">>{}: got [{}] [{}] [{}]",
+            "diamond".bright_cyan().bold(),
+            id.to_string().white().bold(),
+            &username.bright_white().bold(),
+            &password.bright_white().bold()
+        );
+    }
     Ok(())
 }
 pub fn list(ef: Option<&str>) -> anyhow::Result<()> {
@@ -378,5 +419,33 @@ pub fn fuzzy(keyword: &str, ef: Option<&str>) -> anyhow::Result<()> {
             )
         }
     }
+    Ok(())
+}
+
+pub fn switch_vault(valt_path: &str) -> anyhow::Result<()> {
+    extern crate toml as tata;
+    let mut toml = toml()?;
+
+    toml.dependencies.main_vault_path = home_dirr()?.join(valt_path).to_string_lossy().to_string();
+    let toml_to_string = tata::to_string(&toml)?;
+
+    let vault = fs::File::open(toml.dependencies.main_vault_path)
+        .map_err(|_| anyhow!(">>Vault Not Found!"))?;
+
+    if vault.metadata()?.is_dir() {
+        return Err(anyhow!(">>The vault can not be a directory!"));
+    }
+
+    if !valt_path.contains(".json") {
+        return Err(anyhow!(">>The vault must be a json file only!"));
+    }
+
+    atomic_writer(&toml.dependencies.toml_path.into(), &toml_to_string)?;
+
+    println!(
+        ">>{} to >{}<",
+        "switched".bright_blue().bold(),
+        valt_path.bright_yellow().bold()
+    );
     Ok(())
 }

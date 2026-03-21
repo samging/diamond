@@ -255,18 +255,9 @@ pub mod parser {
             if let Some(d) = self.get(*index) {
                 Ok(d.as_str())
             } else {
-                Ok("")
+                use anyhow::anyhow;
+                return Err(anyhow!("Couldn't get data from the parser!"));
             }
-        }
-    }
-}
-
-pub mod cleaner {
-    pub fn extract_string_value_from_result(value: &anyhow::Result<&str>) -> String {
-        if let Ok(o) = value {
-            o.to_string()
-        } else {
-            String::new()
         }
     }
 }

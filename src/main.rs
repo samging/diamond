@@ -14,12 +14,12 @@ use rustyline::{DefaultEditor, error::ReadlineError};
 use crate::{
     backend::{
         parser::{Token, parse_input, parse_input_by_token},
-        safe::AnyHowErrHelper,
+        safe::{AnyHowErrHelper, Checkers},
     },
-    commands::{generate_password, list},
+    commands::{generate_password, list, switch_vault},
     helpers::{
-        add_helper, export_helper, fuzzy_helper, get_helper, help_helper, import_helper,
-        note_helper, remove_helper, rename_helper, search_helper, update_helper,
+        EF_INDEX, ID_INDEX, add_helper, export_helper, fuzzy_helper, get_helper, help_helper,
+        import_helper, note_helper, remove_helper, rename_helper, search_helper, update_helper,
     },
     toml::toml,
     vault::{_init_, print_mini_logo},
@@ -51,6 +51,7 @@ pub enum Commands {
     Update,
     Note,
     Fuzzy,
+    SwitchVault,
 }
 
 pub fn commandsmatch() -> HashMap<String, Commands> {
@@ -93,6 +94,10 @@ pub fn commandsmatch() -> HashMap<String, Commands> {
 
     hashmap.insert(toml.note.unwrap_or("note".to_string()), Commands::Note);
     hashmap.insert(toml.fuzzy.unwrap_or("fuzzy".to_string()), Commands::Fuzzy);
+    hashmap.insert(
+        toml.switch_vault.unwrap_or("switch-vault".to_string()),
+        Commands::SwitchVault,
+    );
     hashmap
 }
 
@@ -116,23 +121,23 @@ fn interface() -> anyhow::Result<()> {
 
     match commandsmatch().get(data.get_token(&0)?) {
         Some(Commands::Add) => {
-            add_helper(1, &data, &data_token)?;
+            add_helper(ID_INDEX, &data, &data_token)?;
         }
         Some(Commands::Get) => {
-            get_helper(1, &data, &data_token)?;
+            get_helper(ID_INDEX, &data, &data_token)?;
         }
 
         Some(Commands::Help) => help_helper(&data, 1).pe()?,
 
         Some(Commands::List) => {
-            let ef = data_token.get(1).map(|s| s.as_str());
+            let ef = data_token.get(EF_INDEX).map(|s| s.as_str());
             list(ef).pe()?;
         }
         Some(Commands::Remove) => {
-            remove_helper(1, &data, &data_token)?;
+            remove_helper(ID_INDEX, &data, &data_token)?;
         }
         Some(Commands::Search) => {
-            search_helper(1, &data, &data_token)?;
+            search_helper(ID_INDEX, &data, &data_token)?;
         }
         Some(Commands::Export) => {
             export_helper(&data, 1, &data_token).pe()?;
@@ -159,10 +164,10 @@ fn interface() -> anyhow::Result<()> {
             import_helper(&data, 1).pe()?;
         }
         Some(Commands::Rename) => {
-            rename_helper(&data, &data_token, 1).pe()?;
+            rename_helper(&data, &data_token, ID_INDEX).pe()?;
         }
         Some(Commands::Update) => {
-            update_helper(&data, &data_token, 1).pe()?;
+            update_helper(&data, &data_token, ID_INDEX).pe()?;
         }
         Some(Commands::Note) => {
             note_helper(&data, &data_token, 1).pe()?;
@@ -170,10 +175,14 @@ fn interface() -> anyhow::Result<()> {
         Some(Commands::Fuzzy) => {
             fuzzy_helper(&data, &data_token, 1).pe()?;
         }
+        Some(Commands::SwitchVault) => {
+            let new_vault_path = data.get_token(&1).checker("Vault-Path".to_string()).pe()?;
+            switch_vault(new_vault_path).pe()?;
+        }
         None => {
             if !data.get_token(&0)?.is_empty() {
                 println!(
-                    ">> The command [{}] you used is not vaild command please use [{} -l] to check all the available commands",
+                    ">>The command [{}] you used is not vaild command please use [{} -l] to check all the available commands",
                     data.get_token(&0)?.bright_red().bold(),
                     "help".bright_yellow().bold()
                 )
