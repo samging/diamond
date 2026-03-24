@@ -1,4 +1,5 @@
 use anyhow::anyhow;
+#[cfg(not(feature = "termux"))]
 use arboard::Clipboard;
 use base64::prelude::*;
 use colored::Colorize;
@@ -102,40 +103,51 @@ pub fn get(
     let username = String::from_utf8(dec.0)?;
     let password = String::from_utf8(dec.1)?;
 
-    if !clipboard_or_without {
-        let mut c = Clipboard::new()?;
-        c.set_text(&password)?;
-        println!(
-            ">>{}, {}",
-            "wait for the password to be saved in the clipboard"
-                .bright_blue()
-                .bold(),
-            "it will take 5s..".bright_purple().bold()
-        );
+    #[cfg(not(feature = "termux"))]
+    {
+        if !clipboard_or_without {
+            let mut c = Clipboard::new()?;
+            c.set_text(&password)?;
+            println!(
+                ">>{}, {}",
+                "wait for the password to be saved in the clipboard"
+                    .bright_blue()
+                    .bold(),
+                "it will take 5s..".bright_purple().bold()
+            );
 
-        let mut sec = 5;
+            let mut sec = 5;
 
-        while sec > 0 {
-            println!("~{}", sec.to_string().bright_cyan().bold());
-            thread::sleep(Duration::from_secs(1));
-            sec -= 1;
+            while sec > 0 {
+                println!("~{}", sec.to_string().bright_cyan().bold());
+                thread::sleep(Duration::from_secs(1));
+                sec -= 1;
+            }
+
+            println!(
+                ">>{}: got [{}] [{}]",
+                "diamond".bright_cyan().bold(),
+                id.to_string().white().bold(),
+                &username.bright_white().bold(),
+            );
+        } else {
+            println!(
+                ">>{}: got [{}] [{}] [{}]",
+                "diamond".bright_cyan().bold(),
+                id.to_string().white().bold(),
+                &username.bright_white().bold(),
+                &password.bright_white().bold()
+            );
         }
-
-        println!(
-            ">>{}: got [{}] [{}]",
-            "diamond".bright_cyan().bold(),
-            id.to_string().white().bold(),
-            &username.bright_white().bold(),
-        );
-    } else {
-        println!(
-            ">>{}: got [{}] [{}] [{}]",
-            "diamond".bright_cyan().bold(),
-            id.to_string().white().bold(),
-            &username.bright_white().bold(),
-            &password.bright_white().bold()
-        );
     }
+    #[cfg(feature = "termux")]
+    println!(
+        ">>{}: got [{}] [{}] [{}]",
+        "diamond".bright_cyan().bold(),
+        id.to_string().white().bold(),
+        &username.bright_white().bold(),
+        &password.bright_white().bold()
+    );
     Ok(())
 }
 pub fn list(ef: Option<&str>) -> anyhow::Result<()> {

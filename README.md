@@ -3,7 +3,7 @@
 </p>
 
 ## about
-**a repl based sensitive information vault built in with rust**
+**a repl based sensitive information vault built in rust**
 ## Features
 
 - **AES-256-GCM encryption** for password storage
@@ -61,12 +61,16 @@ add user@example.com MyP@ssw0rd github  <path.json>
 
 #### Get a password
 ```
-get <id> <<Option: external path>>
+get <id> <flag : --without-clipboard >> prints the password to the screen without saving it to clipboard><<Option: external path>>
 ```
+
+**the clipboard wont work in termux so its --without-clipboard by default**
 
 Example:
 ```
 get github <any.json>
+get wifi --without-clipboard
+get clip --without-clipboard <any.json>
 ```
 
 #### List all entries

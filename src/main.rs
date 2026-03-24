@@ -1,6 +1,6 @@
 mod backend;
 mod crypto;
-use std::collections::HashMap;
+use std::{collections::HashMap, env};
 
 use anyhow::anyhow;
 use colored::Colorize;
@@ -28,6 +28,11 @@ use crate::{
 fn main() -> anyhow::Result<()> {
     _init_()?;
     print_mini_logo();
+
+    if env::var("TERMUX_VERSION").is_ok() {
+        println!("cargo:rustc-cfg=termux")
+    }
+
     loop {
         if interface().is_err() {
             continue;
