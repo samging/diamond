@@ -141,13 +141,42 @@ pub fn get(
         }
     }
     #[cfg(feature = "termux")]
-    println!(
-        ">>{}: got [{}] [{}] [{}]",
-        "diamond".bright_cyan().bold(),
-        id.to_string().white().bold(),
-        &username.bright_white().bold(),
-        &password.bright_white().bold()
-    );
+    {
+        if !clipboard_or_without {
+            terminal_clipboard::set_string(&password)
+                .map_err(|_| anyhow!("Clouldn't copy to clipboard!"))?;
+            println!(
+                ">>{}, {}",
+                "wait for the password to be saved in the clipboard"
+                    .bright_blue()
+                    .bold(),
+                "it will take 5s..".bright_purple().bold()
+            );
+
+            let mut sec = 5;
+
+            while sec > 0 {
+                println!("~{}", sec.to_string().bright_cyan().bold());
+                thread::sleep(Duration::from_secs(1));
+                sec -= 1;
+            }
+
+            println!(
+                ">>{}: got [{}] [{}]",
+                "diamond".bright_cyan().bold(),
+                id.to_string().white().bold(),
+                &username.bright_white().bold(),
+            );
+        } else {
+            println!(
+                ">>{}: got [{}] [{}] [{}]",
+                "diamond".bright_cyan().bold(),
+                id.to_string().white().bold(),
+                &username.bright_white().bold(),
+                &password.bright_white().bold()
+            );
+        }
+    }
     Ok(())
 }
 pub fn list(ef: Option<&str>) -> anyhow::Result<()> {
