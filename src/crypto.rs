@@ -20,12 +20,25 @@ pub struct Fields {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Entry {
     pub id: String,
+    #[serde(default = "def_author")]
+    pub author: String,
     pub salt: String,
     pub nonce: String,
+    #[serde(alias = "username")]
     pub identifier: String,
     pub password: String,
+    #[serde(default)]
     pub note: Option<String>,
+    #[serde(default = "def_date")]
     pub date: String,
+}
+
+fn def_author() -> String {
+    "def".to_string()
+}
+
+fn def_date() -> String {
+    "def".to_string()
 }
 
 #[derive(Debug, Serialize, Deserialize)]

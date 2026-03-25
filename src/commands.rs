@@ -1,6 +1,4 @@
 use anyhow::anyhow;
-#[cfg(not(feature = "termux"))]
-use arboard::Clipboard;
 use base64::prelude::*;
 use colored::Colorize;
 use qrcode::{
@@ -39,7 +37,8 @@ pub fn add(
     ef: Option<&str>,
 ) -> anyhow::Result<()> {
     let password = if password.contains("gp") {
-        generate_password()?
+        //we recommend the password to be 32 characters
+        generate_password(Some(32))?
     } else {
         password.to_string()
     };
@@ -60,10 +59,12 @@ pub fn add(
     );
 
     let date_of_adding = chrono::Local::now().to_string();
+    let author = toml()?.customization.username;
 
     let content = Fields {
         entry: Entry {
             id: id.to_string(),
+            author: author,
             salt,
             nonce,
             identifier: username,
@@ -127,71 +128,39 @@ pub fn get(id: &str, master_key: &str, flags: Flags, ef: Option<&str>) -> anyhow
     }
 
     if let Some(clipboard_or_without) = flags.clip {
-        #[cfg(not(feature = "termux"))]
-        {
-            if clipboard_or_without {
-                let mut c = Clipboard::new()?;
-                c.set_text(&password)?;
-                println!(
-                    ">>{}, {}",
-                    "wait for the password to be saved in the clipboard"
-                        .bright_blue()
-                        .bold(),
-                    "it will take 5s..".bright_purple().bold()
-                );
+        if clipboard_or_without {
+            terminal_clipboard::set_string(&password)
+                .map_err(|_| anyhow!("Clouldn't copy to clipboard!"))?;
+            println!(
+                ">>{}, {}",
+                "wait for the password to be saved in the clipboard"
+                    .bright_blue()
+                    .bold(),
+                "it will take 5s..".bright_purple().bold()
+            );
 
-                let mut sec = 5;
+            let mut sec = 5;
 
-                while sec > 0 {
-                    let pb = ProgressBar::new(5);
+            while sec > 0 {
+                let pb = ProgressBar::new(5);
 
-                    for _ in 0..5 {
-                        sleep(Duration::from_secs(1));
-                        pb.clone()
-                            .with_style(ProgressStyle::with_template(
-                                "⏳ ~> [{bar:40.cyan/blue}] {pos}/{len}s",
-                            )?)
-                            .inc(1);
-                    }
-                    sec = 0
+                for _ in 0..5 {
+                    sleep(Duration::from_secs(1));
+                    pb.clone()
+                        .with_style(ProgressStyle::with_template(
+                            "⏳ ~> [{bar:40.cyan/blue}] {pos}/{len}s",
+                        )?)
+                        .inc(1);
                 }
-
-                println!(
-                    ">>{}: got [{}] [{}]",
-                    "diamond".bright_cyan().bold(),
-                    id.to_string().white().bold(),
-                    &username.bright_white().bold(),
-                );
+                sec = 0
             }
-        }
-        #[cfg(feature = "termux")]
-        {
-            if !clipboard_or_without {
-                terminal_clipboard::set_string(&password)
-                    .map_err(|_| anyhow!("Clouldn't copy to clipboard!"))?;
-                println!(
-                    ">>{}, {}",
-                    "wait for the password to be saved in the clipboard"
-                        .bright_blue()
-                        .bold(),
-                    "it will take 5s..".bright_purple().bold()
-                );
 
-                let mut sec = 5;
-
-                while sec > 0 {
-                    println!("~{}", sec.to_string().bright_cyan().bold());
-                    thread::sleep(Duration::from_secs(1));
-                    sec -= 1;
-                }
-
-                println!(
-                    ">>{}: got [{}] [{}]",
-                    "diamond".bright_cyan().bold(),
-                    id.to_string().white().bold(),
-                    &username.bright_white().bold(),
-                );
-            }
+            println!(
+                ">>{}: got [{}] [{}]",
+                "diamond".bright_cyan().bold(),
+                id.to_string().white().bold(),
+                &username.bright_white().bold(),
+            );
         }
     }
 
@@ -313,11 +282,19 @@ pub fn search(id: &str, ef: Option<&str>) -> anyhow::Result<()> {
     }
     Ok(())
 }
-pub fn generate_password() -> anyhow::Result<String> {
+pub fn generate_password(len: Option<u32>) -> anyhow::Result<String> {
+    let len = len.unwrap_or(16);
+
+    if len < 16 {
+        return Err(anyhow!(
+            "the password length cannot be lesser than 16 characters "
+        ));
+    }
+
     use rand::distr::Alphanumeric;
     let gen_pass: String = rand::rng()
         .sample_iter(&Alphanumeric)
-        .take(16)
+        .take(len as usize)
         .map(char::from)
         .collect();
 
@@ -385,6 +362,8 @@ pub fn rename(id: &str, new_id: &str, ef: Option<&str>) -> anyhow::Result<()> {
 
     if let Some(idd) = read_json.iter_mut().find(|s| s.entry.id == id) {
         idd.entry.id = new_id.to_string();
+    } else {
+        return Err(anyhow!("the id <{}> was not found", id));
     }
 
     let json = serde_json::to_string_pretty(&read_json)?;
@@ -461,6 +440,8 @@ pub fn note(id: &str, note: &str, ef: Option<&str>) -> anyhow::Result<()> {
 
     if let Some(notee) = read_json.iter_mut().find(|s| s.entry.id == id) {
         notee.entry.note = Some(note.to_string());
+    } else {
+        return Err(anyhow!("the id <{}> was not found", id));
     }
 
     let json = serde_json::to_string_pretty(&read_json)?;

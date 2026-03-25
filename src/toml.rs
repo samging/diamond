@@ -1,6 +1,7 @@
 use std::{fs, io::Read, path::PathBuf};
 
 use anyhow::anyhow;
+use colored::Colorize;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -213,5 +214,6 @@ pub fn toma(data: &Vec<String>, mut index: usize) -> anyhow::Result<()> {
     }
     let json = toml::to_string(&toml_file)?;
     atomic_writer(&PathBuf::from(toml_file.dependencies.toml_path), &json)?;
+    println!(">>{}!", "toma is done".bright_cyan().bold());
     Ok(())
 }

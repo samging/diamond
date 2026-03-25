@@ -71,7 +71,6 @@ get <id> <flag> <<Option: external path>>
 - **--with-hex-format** -> prints the identifier and password in hex format
 
 **please keep in mind that the default flag is plaintext**
-**master key entered incorrectly for 3 times will get you block for 30min**
 Example:
 ```
 get github <any.json>
@@ -232,6 +231,7 @@ External vaults are stored at the specified path relative to `~`.
 
 Each entry stores:
 - `id`: id identifier
+- `author` the username of the parson who did the add 
 - `salt` : the salt used in encrypting
 - `nonce`: the nonce used in encrypting
 - `note`: a note
@@ -245,7 +245,6 @@ Each entry stores:
 
 ```bash
 cargo build --release
-cargo run --features termux --no-default-features **for Termux**
 ```
 ## Security Considerations
 
@@ -261,7 +260,7 @@ cargo run --features termux --no-default-features **for Termux**
 - **Linux/Unix**: Full support with file permissions
 - **macOS**: Full support with file permissions  
 - **Windows**: Core functionality (no Unix permissions)
-- **Termux** : Full support with file permissions
+- **Android** : Full support with file permissions (Via Termux)
 ## Disclaimer
 
 This software is provided as-is. Always maintain backups of your password vault. The authors are not responsible for data loss or security breaches.
