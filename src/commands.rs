@@ -17,7 +17,7 @@ use zeroize::Zeroizing;
 
 use indicatif::{ProgressBar, ProgressStyle};
 
-use crate::crypto::{Entry, Fields, dec, enc, read_json};
+use crate::crypto::{_2fa_auth, Entry, Fields, dec, enc, read_json};
 use crate::{
     backend::safe::AnyHowErrHelper,
     crypto::{self, dec_vault, enc_vault},
@@ -35,6 +35,7 @@ pub fn add(
     master_key: &str,
     note: Option<&str>,
     ef: Option<&str>,
+    _2fa_raw_s: Vec<u8>,
 ) -> anyhow::Result<()> {
     let password = if password.contains("gp") {
         //we recommend the password to be 32 characters
@@ -45,17 +46,20 @@ pub fn add(
 
     let password = Zeroizing::new(password.to_string());
     let master_key = Zeroizing::new(master_key.to_string());
+    let _2fa_ = Zeroizing::new(_2fa_raw_s);
     let mut file = read_json(ef).pe()?;
 
     let main_vault_path: PathBuf = toml()?.dependencies.main_vault_path.into();
 
-    let enc = enc(&master_key, username_email, &password)?;
+    let enc = enc(&master_key, username_email, &password, &_2fa_)?;
 
-    let (salt, nonce, username, password) = (
+    let (salt, nonce, username, password, _2fa_n, _2fa_s) = (
         BASE64_STANDARD.encode(enc.0),
         BASE64_STANDARD.encode(enc.1),
         BASE64_STANDARD.encode(enc.2),
         BASE64_STANDARD.encode(enc.3),
+        BASE64_STANDARD.encode(enc.4),
+        BASE64_STANDARD.encode(enc.5),
     );
 
     let date_of_adding = chrono::Local::now().to_string();
@@ -71,6 +75,10 @@ pub fn add(
             password,
             note: note.map(String::from),
             date: date_of_adding,
+            _2fa_: crypto::_2fa_ {
+                totp_secret: _2fa_s,
+                totp_nonce: _2fa_n,
+            },
         },
     };
 
@@ -113,6 +121,9 @@ pub fn get(id: &str, master_key: &str, flags: Flags, ef: Option<&str>) -> anyhow
 
     let username = String::from_utf8(dec.0)?;
     let password = String::from_utf8(dec.1)?;
+    let totp_s = dec.2;
+
+    _2fa_auth(&totp_s, id)?;
 
     if matches!(flags.clip, Some(false))
         && matches!(flags.encodded, Some(false))
@@ -128,63 +139,66 @@ pub fn get(id: &str, master_key: &str, flags: Flags, ef: Option<&str>) -> anyhow
     }
 
     if let Some(clipboard_or_without) = flags.clip
-        && clipboard_or_without {
-            terminal_clipboard::set_string(&password)
-                .map_err(|_| anyhow!("Clouldn't copy to clipboard!"))?;
-            println!(
-                ">>{}, {}",
-                "wait for the password to be saved in the clipboard"
-                    .bright_blue()
-                    .bold(),
-                "it will take 5s..".bright_purple().bold()
-            );
+        && clipboard_or_without
+    {
+        terminal_clipboard::set_string(&password)
+            .map_err(|_| anyhow!("Clouldn't copy to clipboard!"))?;
+        println!(
+            ">>{}, {}",
+            "wait for the password to be saved in the clipboard"
+                .bright_blue()
+                .bold(),
+            "it will take 5s..".bright_purple().bold()
+        );
 
-            let mut sec = 5;
+        let mut sec = 5;
 
-            while sec > 0 {
-                let pb = ProgressBar::new(5);
+        while sec > 0 {
+            let pb = ProgressBar::new(5);
 
-                for _ in 0..5 {
-                    sleep(Duration::from_secs(1));
-                    pb.clone()
-                        .with_style(ProgressStyle::with_template(
-                            "⏳ ~> [{bar:40.cyan/blue}] {pos}/{len}s",
-                        )?)
-                        .inc(1);
-                }
-                sec = 0
+            for _ in 0..5 {
+                sleep(Duration::from_secs(1));
+                pb.clone()
+                    .with_style(ProgressStyle::with_template(
+                        "⏳ ~> [{bar:40.cyan/blue}] {pos}/{len}s",
+                    )?)
+                    .inc(1);
             }
-
-            println!(
-                ">>{}: got [{}] [{}]",
-                "diamond".bright_cyan().bold(),
-                id.to_string().white().bold(),
-                &username.bright_white().bold(),
-            );
+            sec = 0
         }
+
+        println!(
+            ">>{}: got [{}] [{}]",
+            "diamond".bright_cyan().bold(),
+            id.to_string().white().bold(),
+            &username.bright_white().bold(),
+        );
+    }
 
     if let Some(qrcode) = flags.qrcode
-        && qrcode {
-            let qrcode = QrCode::new(format!("{}|{}", username, password).as_bytes())?;
-            let string_qr = qrcode
-                .render::<unicode::Dense1x2>()
-                .max_dimensions(1, 1)
-                .quiet_zone(false)
-                .build();
+        && qrcode
+    {
+        let qrcode = QrCode::new(format!("{}|{}", username, password).as_bytes())?;
+        let string_qr = qrcode
+            .render::<unicode::Dense1x2>()
+            .max_dimensions(1, 1)
+            .quiet_zone(false)
+            .build();
 
-            println!("{}", string_qr)
-        }
+        println!("{}", string_qr)
+    }
 
     if let Some(with_hex) = flags.encodded
-        && with_hex {
-            let encoded = hex::encode(format!("{}|{}", username, password));
-            println!(
-                ">>{}: got [{}] [{}]",
-                "diamond".bright_cyan().bold(),
-                id.to_string().white().bold(),
-                &encoded.bright_white().bold()
-            );
-        }
+        && with_hex
+    {
+        let encoded = hex::encode(format!("{}|{}", username, password));
+        println!(
+            ">>{}: got [{}] [{}]",
+            "diamond".bright_cyan().bold(),
+            id.to_string().white().bold(),
+            &encoded.bright_white().bold()
+        );
+    }
     Ok(())
 }
 pub fn list(ef: Option<&str>) -> anyhow::Result<()> {
@@ -211,12 +225,9 @@ pub fn list(ef: Option<&str>) -> anyhow::Result<()> {
 
     Ok(())
 }
-pub fn remove(id: &str, ef: Option<&str>, master_key: &str) -> anyhow::Result<()> {
+pub fn remove(id: &str, ef: Option<&str>) -> anyhow::Result<()> {
     let mut read_json = read_json(ef)?;
-    let master_key = Zeroizing::new(master_key.to_string());
     let main_vault_path: PathBuf = toml()?.dependencies.main_vault_path.into();
-
-    dec(&master_key, id, ef).map_err(|_| anyhow!("Incorrect master key for entry <{}>", id))?;
 
     println!(
         ">> are you sure you want to delete <{}>",
@@ -303,26 +314,36 @@ pub fn generate_password(len: Option<u32>) -> anyhow::Result<String> {
     Ok(gen_pass)
 }
 
-pub fn export(ef: Option<&str>, name_of_export: &str, master_key: &str) -> anyhow::Result<()> {
+pub fn export(
+    ef: Option<&str>,
+    name_of_export: &str,
+    master_key: &str,
+    _2fa_raw_s: Vec<u8>,
+) -> anyhow::Result<()> {
     let mut vault = String::new();
     let main_vault_path: PathBuf = toml()?.dependencies.main_vault_path.into();
     let master_key = Zeroizing::new(master_key.to_string());
-
     if let Some(ef) = ef {
         fs::File::open(home_dirr()?.join(ef))?.read_to_string(&mut vault)?;
     } else {
         fs::File::open(main_vault_path)?.read_to_string(&mut vault)?;
     };
 
-    let (salt, nonce, data) = enc_vault(&master_key, vault)?;
-    let (encoded_salt, encoded_nonce, encoded_vault) = (
+    let (salt, nonce, data, _2fa_n, _2fa_s) = enc_vault(&master_key, vault, _2fa_raw_s)?;
+    let (encoded_salt, encoded_nonce, encoded_vault, encoded_nonce_totp, encoded_secret_totp) = (
         BASE64_STANDARD.encode(salt),
         BASE64_STANDARD.encode(nonce),
         BASE64_STANDARD.encode(data),
+        BASE64_STANDARD.encode(_2fa_n),
+        BASE64_STANDARD.encode(_2fa_s),
     );
     let content = crypto::VaultExport {
         salt: encoded_salt,
         nonce: encoded_nonce,
+        _2fa_: crypto::_2fa_ {
+            totp_secret: encoded_secret_totp,
+            totp_nonce: encoded_nonce_totp,
+        },
         vault: encoded_vault,
     };
     let json = serde_json::to_string_pretty(&content)?;
@@ -336,7 +357,9 @@ pub fn export(ef: Option<&str>, name_of_export: &str, master_key: &str) -> anyho
 
 pub fn import(master_key: &str, new_name: &str, path_of_vault: &str) -> anyhow::Result<()> {
     let master_key = Zeroizing::new(master_key.to_string());
-    let dec: String = String::from_utf8(dec_vault(master_key.as_str(), path_of_vault)?)?;
+    let (dec, totp_s) = dec_vault(master_key.as_str(), path_of_vault)?;
+    let dec: String = String::from_utf8(dec)?;
+    _2fa_auth(&totp_s, path_of_vault)?;
     let json_args = serde_json::from_str::<Vec<Fields>>(dec.trim())?;
     let json = serde_json::to_string_pretty(&json_args)?;
     atomic_writer(&home_dirr()?.join(new_name), &json)?;
@@ -391,14 +414,17 @@ pub fn update(
 
     let mut read_json = read_json(ef)?;
 
-    dec(&master_key, id, ef)
+    let dec = dec(&master_key, id, ef)
         .map_err(|_| anyhow!("Incorrect master-key!"))
         .pe()?;
+
+    let _2fa_ = dec.2;
+    _2fa_auth(&_2fa_, id)?;
 
     let main_vault_path: PathBuf = toml()?.dependencies.main_vault_path.into();
 
     if let Some(new) = read_json.iter_mut().find(|s| s.entry.id == id) {
-        let enc = enc(&master_key, new_user_name, &new_password)?;
+        let enc = enc(&master_key, new_user_name, &new_password, &_2fa_)?;
         let (salt, nonce, username, password) = (
             BASE64_STANDARD.encode(enc.0),
             BASE64_STANDARD.encode(enc.1),

@@ -58,7 +58,7 @@ pub enum Commands {
 pub fn commandsmatch() -> HashMap<String, Commands> {
     let toml = toml()
         .ok()
-        .and_then(|s| s.customization.allies)
+        .and_then(|s| s.customization.alies)
         .unwrap_or_default();
 
     let mut hashmap = HashMap::new();

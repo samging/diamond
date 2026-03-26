@@ -49,7 +49,9 @@ pub fn add_helper(
     index += 1;
     let ef = data_token.get(index).map(|s| s.as_str());
 
-    let master_key = helper_master_key()
+    let (master_key, _2fa_s) = helper_master_key(true)?;
+
+    let master_key = master_key
         .checker("Master-key".to_string())?
         .to_string()
         .master_key_checker()
@@ -61,7 +63,7 @@ pub fn add_helper(
 
     let id = &id.to_string().check_existing_ids(id, ef).pe()?;
 
-    add(username_email, id, password, &master_key, note, ef).pe()?;
+    add(username_email, id, password, &master_key, note, ef, _2fa_s).pe()?;
     Ok(())
 }
 
@@ -107,7 +109,9 @@ pub fn get_helper(
 
     id_does_not_existe(id, ID_INDEX, data, ef).pe()?;
 
-    let master_key = helper_master_key()
+    let (master_key, _2fa_s) = helper_master_key(false)?;
+
+    let master_key = master_key
         .checker("Master-Key".to_string())?
         .to_string()
         .master_key_checker()
@@ -129,13 +133,7 @@ pub fn remove_helper(
 
     id_does_not_existe(id, ID_INDEX, data, ef).pe()?;
 
-    let master_key = helper_master_key()
-        .checker("Master-Key".to_string())?
-        .to_string()
-        .master_key_checker()
-        .pe()?;
-
-    remove(id, ef, &master_key).pe()?;
+    remove(id, ef).pe()?;
     Ok(())
 }
 
@@ -167,7 +165,9 @@ pub fn export_helper(
     index += 1;
     let ef = data_token.get(index).map(|s| s.as_str());
 
-    let master_key = helper_master_key()
+    let (master_key, _2fa_s) = helper_master_key(true)?;
+
+    let master_key = master_key
         .checker("Master-Key".to_string())?
         .to_string()
         .master_key_checker()
@@ -175,7 +175,7 @@ pub fn export_helper(
         .check_password_strength("Master-Key", "")
         .pe()?;
 
-    export(ef, name_of_export, &master_key).pe()?;
+    export(ef, name_of_export, &master_key, _2fa_s).pe()?;
     Ok(())
 }
 
@@ -191,7 +191,9 @@ pub fn import_helper(data: &Vec<String>, mut index: usize) -> anyhow::Result<()>
         .checker("the path of the vault".to_string())
         .pe()?;
 
-    let master_key = helper_master_key()
+    let (master_key, _) = helper_master_key(false)?;
+
+    let master_key = master_key
         .checker("Master-Key".to_string())?
         .to_string()
         .master_key_checker()
@@ -277,7 +279,7 @@ pub fn help_helper_() -> anyhow::Result<()> {
         "username".bright_yellow().bold(),
         "main-vault-path".bright_yellow().bold(),
         "toml-file-path".bright_yellow().bold(),
-        "allies".bright_yellow().bold(),
+        "alies".bright_yellow().bold(),
     );
     Ok(())
 }
@@ -432,13 +434,14 @@ pub fn help_helper(data: &Vec<String>, index: usize) -> anyhow::Result<()> {
         }
         "--toma" => {
             println!(
-                ">>{}: [{}] [{}] [{}] [{}]",
+                ">>{}: [{}] [{}] [{}] [{}] [{}]",
                 "Usage".bright_green().bold(),
                 "diamond".bright_blue().bold(),
                 "toma".bright_yellow().bold(),
                 "[username/main-vault-path/toml-file-path/allies]"
                     .bright_yellow()
                     .bold(),
+                "old-value".bright_yellow().bold(),
                 "new-value".bright_yellow().bold(),
             )
         }
@@ -460,7 +463,7 @@ pub fn help_helper(data: &Vec<String>, index: usize) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn helper_master_key() -> anyhow::Result<String> {
+fn helper_master_key(totp_make: bool) -> anyhow::Result<(String, Vec<u8>)> {
     let format = format!(
         ">>{} Your {}{}{} :",
         "Enter".bright_cyan().bold(),
@@ -474,7 +477,25 @@ fn helper_master_key() -> anyhow::Result<String> {
         return Err(anyhow!("You Entered nothing!"));
     }
 
-    Ok(master_key_input)
+    let raw_s = if totp_make {
+        let _2fa_s = totp_rs::Secret::generate_secret();
+        let raw_s_2fa = _2fa_s.to_bytes()?;
+        let user_2fa = _2fa_s.to_encoded().to_string();
+
+        println!(
+            ">>TOTP secret for <{}> | [{}]",
+            user_2fa.bright_green().bold(),
+            "Add this to your authenticator app before continuing!"
+                .bright_purple()
+                .bold()
+        );
+
+        raw_s_2fa
+    } else {
+        Vec::new()
+    };
+
+    Ok((master_key_input, raw_s))
 }
 
 pub fn rename_helper(
@@ -514,7 +535,10 @@ pub fn update_helper(
     let ef = data_token.get(index).map(|s| s.as_str());
 
     id_does_not_existe(id, ID_INDEX, data, ef).pe()?;
-    let master_key = helper_master_key()
+
+    let (master_key, _) = helper_master_key(false)?;
+
+    let master_key = master_key
         .checker("master-key".to_string())?
         .to_string()
         .master_key_checker()

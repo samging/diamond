@@ -23,6 +23,7 @@ diamond uses industry-standard cryptography:
 - **Key Derivation**: Argon2 with random 32-byte salt
 - **Memory Safety**: Zeroizing for sensitive data in memory
 - **File Permissions**: Unix 0600 (owner read/write only)
+- **2fa per Entry**: in add you get 2fa key you add that key in your authenticator so you can make get/update the same thing goes when you make export you will get a key and so on!   
 
 All passwords are encrypted before storage. The master key never touches disk in plaintext.
 
@@ -203,15 +204,15 @@ switch-vault any.json
 ```
 #### toma a toml config manager
 ```
-toma <toml-file-path/main-vault-path/username/allies> <new-value> |if allies <add/get/etc..> <new-allies>|
+toma <toml-file-path/main-vault-path/username/allies> <old-value> <new-value> |if allies <add/get/etc..> <new-allies>|
 ```
 Example:
 ```
 toma toml-file-path new_path.toml
 toma main-vault-path new_path.json
 toma username gem!.
-toma allies add ahh
-toma allies list ls 
+toma alies add ahh
+toma alies list ls 
 ```
 ## Password Requirements
 
@@ -244,7 +245,8 @@ Each entry stores:
 ### Build
 
 ```bash
-cargo build --release
+cargo build 
+cargo run
 ```
 ## Security Considerations
 

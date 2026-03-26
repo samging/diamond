@@ -39,6 +39,17 @@ pub mod safe {
         }
     }
 
+    impl Checkers for String {
+        type Out = anyhow::Result<String>;
+        fn checker(self, res: String) -> Self::Out {
+            if self.is_empty() {
+                Err(anyhow!("missing value [{}]", res))
+            } else {
+                Ok(self)
+            }
+        }
+    }
+
     impl<T> Checkers for Option<T> {
         type Out = anyhow::Result<T>;
         fn checker(self, res: String) -> Self::Out {

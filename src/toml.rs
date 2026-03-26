@@ -22,7 +22,7 @@ pub struct Toml {
 #[derive(Serialize, Deserialize, Default)]
 pub struct Customization {
     pub username: String,
-    pub allies: Option<Allies>,
+    pub alies: Option<Allies>,
 }
 #[derive(Serialize, Deserialize, Default)]
 pub struct Dependencies {
@@ -78,7 +78,7 @@ pub fn toml_init() -> anyhow::Result<()> {
     let def_toml = Toml {
         customization: Customization {
             username,
-            allies: None,
+            alies: None,
         },
         dependencies: Dependencies {
             main_vault_path,
@@ -100,9 +100,7 @@ pub fn toma(data: &Vec<String>, mut index: usize) -> anyhow::Result<()> {
     index += 1;
 
     let changer = |checker_mas: &str, indexx: &usize| {
-        data.get_token(indexx)
-            .checker(checker_mas.to_string())
-            .pe()
+        data.get_token(indexx).checker(checker_mas.to_string()).pe()
     };
 
     match change.trim() {
@@ -120,92 +118,74 @@ pub fn toma(data: &Vec<String>, mut index: usize) -> anyhow::Result<()> {
             let new_user = changer("new-username", &index)?;
             toml_file.customization.username = new_user.to_string();
         }
-        "allies" => {
+        "alies" => {
             let ali_to_change = changer("allie to change", &index)?;
             index += 1;
-            let new_allies = changer("new-allies", &index)?;
+            let new_alies = changer("new-allies", &index)?;
 
             match ali_to_change.trim() {
                 "add" => {
-                    toml_file.customization.allies.get_or_insert_default().add =
-                        Some(new_allies.to_string());
+                    toml_file.customization.alies.get_or_insert_default().add =
+                        Some(new_alies.to_string());
                 }
                 "get" => {
-                    toml_file.customization.allies.get_or_insert_default().get =
-                        Some(new_allies.to_string());
+                    toml_file.customization.alies.get_or_insert_default().get =
+                        Some(new_alies.to_string());
                 }
                 "remove" => {
-                    toml_file
-                        .customization
-                        .allies
-                        .get_or_insert_default()
-                        .remove = Some(new_allies.to_string());
+                    toml_file.customization.alies.get_or_insert_default().remove =
+                        Some(new_alies.to_string());
                 }
                 "list" => {
-                    toml_file.customization.allies.get_or_insert_default().list =
-                        Some(new_allies.to_string());
+                    toml_file.customization.alies.get_or_insert_default().list =
+                        Some(new_alies.to_string());
                 }
                 "rename" => {
-                    toml_file
-                        .customization
-                        .allies
-                        .get_or_insert_default()
-                        .rename = Some(new_allies.to_string());
+                    toml_file.customization.alies.get_or_insert_default().rename =
+                        Some(new_alies.to_string());
                 }
                 "clear" => {
-                    toml_file.customization.allies.get_or_insert_default().clear =
-                        Some(new_allies.to_string());
+                    toml_file.customization.alies.get_or_insert_default().clear =
+                        Some(new_alies.to_string());
                 }
                 "exit" => {
-                    toml_file.customization.allies.get_or_insert_default().exit =
-                        Some(new_allies.to_string());
+                    toml_file.customization.alies.get_or_insert_default().exit =
+                        Some(new_alies.to_string());
                 }
                 "export" => {
-                    toml_file
-                        .customization
-                        .allies
-                        .get_or_insert_default()
-                        .export = Some(new_allies.to_string());
+                    toml_file.customization.alies.get_or_insert_default().export =
+                        Some(new_alies.to_string());
                 }
                 "import" => {
-                    toml_file
-                        .customization
-                        .allies
-                        .get_or_insert_default()
-                        .import = Some(new_allies.to_string());
+                    toml_file.customization.alies.get_or_insert_default().import =
+                        Some(new_alies.to_string());
                 }
                 "search" => {
-                    toml_file
-                        .customization
-                        .allies
-                        .get_or_insert_default()
-                        .search = Some(new_allies.to_string());
+                    toml_file.customization.alies.get_or_insert_default().search =
+                        Some(new_alies.to_string());
                 }
                 "fuzzy" => {
-                    toml_file.customization.allies.get_or_insert_default().fuzzy =
-                        Some(new_allies.to_string());
+                    toml_file.customization.alies.get_or_insert_default().fuzzy =
+                        Some(new_alies.to_string());
                 }
                 "switch-vault" => {
                     toml_file
                         .customization
-                        .allies
+                        .alies
                         .get_or_insert_default()
-                        .switch_vault = Some(new_allies.to_string());
+                        .switch_vault = Some(new_alies.to_string());
                 }
                 "update" => {
-                    toml_file
-                        .customization
-                        .allies
-                        .get_or_insert_default()
-                        .update = Some(new_allies.to_string());
+                    toml_file.customization.alies.get_or_insert_default().update =
+                        Some(new_alies.to_string());
                 }
                 "note" => {
-                    toml_file.customization.allies.get_or_insert_default().note =
-                        Some(new_allies.to_string());
+                    toml_file.customization.alies.get_or_insert_default().note =
+                        Some(new_alies.to_string());
                 }
                 "toma" => {
-                    toml_file.customization.allies.get_or_insert_default().toma =
-                        Some(new_allies.to_string());
+                    toml_file.customization.alies.get_or_insert_default().toma =
+                        Some(new_alies.to_string());
                 }
                 _ => {}
             }
