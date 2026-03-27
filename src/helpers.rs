@@ -516,7 +516,7 @@ pub fn master_key_matcher(master_key: &str) -> anyhow::Result<()> {
     if master_key.to_string() == renter_master_key {
         Ok(())
     } else {
-        return Err(anyhow!("The master key didn't match try again!"));
+        Err(anyhow!("The master key didn't match try again!"))
     }
 }
 
